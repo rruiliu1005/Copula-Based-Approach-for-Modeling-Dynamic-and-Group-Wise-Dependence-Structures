@@ -1,0 +1,319 @@
+---
+title: "Check Stationarity 1018"
+author: "Rui Liu"
+date: "2023-10-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tseries)
+library(dplyr)
+```
+
+```{r}
+df = read.csv('USDT_perp_futures_0305_daily.csv')
+df = distinct(df)
+data_df = df[(df$inst == 'BTCUSDT')|(df$inst == 'ETHUSDT') |(df$inst == 'LINKUSDT')|(df$inst == 'AAVEUSDT')|
+               (df$inst == 'UNIUSDT')|(df$inst == 'MKRUSDT')|(df$inst == 'SHIBUSDT') | (df$inst == 'DOGEUSDT') | 
+               (df$inst == 'IMXUSDT'), ]
+data_df$openTime = as.POSIXct(data_df$openTime/1000, origin = "1970-01-01", tz = "UTC")
+returns_df = data_df[,c('openTime', 'inst')]
+returns_df['daily_returns'] = (data_df$Close-data_df$Open)/data_df$Open
+returns_df['log_returns'] = log(returns_df$daily_returns+1)
+returns_df = returns_df[order(returns_df$openTime),]
+```
+
+# 1. BTC
+
+## 1.1 Adfuller test
+```{r}
+BTC = returns_df[returns_df$inst == 'BTCUSDT', c('openTime', 'log_returns')]
+BTC_ts = ts(BTC$log_returns)
+adf.test(BTC_ts)
+```
+
+The p-value is0.01, the time series is stationary 
+
+## 1.2 KPSS test 
+
+```{r}
+kpss.test(BTC_ts, null = "Trend")
+```
+p value is 0.01, time series is trend stationary 
+
+
+# 1.3 PP test 
+
+```{r}
+pp.test(BTC_ts)
+```
+
+```{r}
+plot(BTC$log_returns, ETH$log_returns)
+cor.test(BTC$log_returns, ETH$log_returns, method = 'spearman')
+```
+p value is 0.01, time series is weakly stationary 
+
+# 1.4 ACF plot and PACF plot 
+
+```{r}
+acf(BTC_ts^2)
+```
+
+```{r}
+pacf(BTC_ts^2)
+```
+
+
+# 2. ETH
+
+## 2.1 Adfuller test
+```{r}
+ETH = returns_df[returns_df$inst == 'ETHUSDT', c('openTime', 'log_returns')]
+ETH_ts = ts(ETH$log_returns)
+adf.test(ETH_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 2.2 KPSS test 
+
+```{r}
+kpss.test(ETH_ts)
+```
+
+** possibly not stationary 
+
+# 2.3 PP test 
+
+```{r}
+pp.test(ETH_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 2.4 ACF plot and PACF plot 
+
+```{r}
+acf(ETH_ts)
+```
+
+```{r}
+pacf(ETH_ts)
+```
+
+# 3. LINK
+
+## 3.3 Adfuller test
+```{r}
+LINK = returns_df[returns_df$inst == 'LINKUSDT', c('openTime', 'log_returns')]
+LINK_ts = ts(LINK$log_returns)
+adf.test(LINK_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 3.3 KPSS test 
+
+```{r}
+kpss.test(LINK_ts)
+```
+The p-value is 0.01, the time series is stationary 
+
+
+# 3.3 PP test 
+
+```{r}
+pp.test(LINK_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 3.4 ACF plot and PACF plot 
+
+```{r}
+acf(LINK_ts)
+```
+
+```{r}
+pacf(LINK_ts)
+```
+
+# 4. AAVE
+
+## 4.1 Adfuller test
+```{r}
+AAVE = returns_df[returns_df$inst == 'AAVEUSDT', c('openTime', 'log_returns')]
+AAVE_ts = ts(AAVE$log_returns)
+adf.test(AAVE_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 4.2 KPSS test 
+
+```{r}
+kpss.test(AAVE_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+# 4.3 PP test 
+
+```{r}
+pp.test(AAVE_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 4.4 ACF plot and PACF plot 
+
+```{r}
+acf(AAVE_ts)
+```
+
+```{r}
+pacf(AAVE_ts)
+```
+# 5. UNI
+
+## 5.1 Adfuller test
+```{r}
+UNI = returns_df[returns_df$inst == 'UNIUSDT', c('openTime', 'log_returns')]
+UNI_ts = ts(UNI$log_returns)
+adf.test(UNI_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 5.2 KPSS test 
+
+```{r}
+kpss.test(UNI_ts)
+```
+The p-value is less than 0.01, the time series is stationary 
+
+# 5.3 PP test 
+
+```{r}
+pp.test(UNI_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 5.4 ACF plot and PACF plot 
+
+```{r}
+acf(UNI_ts)
+```
+
+```{r}
+pacf(UNI_ts)
+```
+# 6. MKR
+
+## 6.1 Adfuller test
+```{r}
+MKR = returns_df[returns_df$inst == 'MKRUSDT', c('openTime', 'log_returns')]
+MKR_ts = ts(MKR$log_returns)
+adf.test(MKR_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 6.2 KPSS test 
+
+```{r}
+kpss.test(MKR_ts)
+```
+The p-value is less than 0.01, the time series is stationary 
+
+# 6.3 PP test 
+
+```{r}
+pp.test(MKR_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 6.4 ACF plot and PACF plot 
+
+```{r}
+acf(MKR_ts)
+```
+
+```{r}
+pacf(MKR_ts)
+```
+
+
+
+# 7. DOGE
+
+## 7.1 Adfuller test
+```{r}
+DOGE = returns_df[returns_df$inst == 'DOGEUSDT', c('openTime', 'log_returns')]
+DOGE_ts = ts(DOGE$log_returns)
+adf.test(DOGE_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 7.2 KPSS test 
+
+```{r}
+kpss.test(DOGE_ts)
+```
+
+** Possibly not trend stationary 
+
+# 7.3 PP test 
+
+```{r}
+pp.test(DOGE_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 7.4 ACF plot and PACF plot 
+
+```{r}
+acf(DOGE_ts)
+```
+
+```{r}
+pacf(DOGE_ts)
+```
+
+
+# 8. IMX
+
+## 8.1 Adfuller test
+```{r}
+IMX = returns_df[returns_df$inst == 'IMXUSDT', c('openTime', 'log_returns')]
+IMX_ts = ts(IMX$log_returns)
+adf.test(IMX_ts)
+```
+
+The p-value is 0.01, the time series is stationary 
+
+## 8.2 KPSS test 
+
+```{r}
+kpss.test(IMX_ts)
+```
+The p-value is less than 0.01, the time series is stationary 
+
+# 8.3 PP test 
+
+```{r}
+pp.test(IMX_ts)
+```
+p value is 0.01, time series is weakly stationary 
+
+# 8.4 ACF plot and PACF plot 
+
+```{r}
+acf(IMX_ts)
+```
+
+```{r}
+pacf(IMX_ts)
+```

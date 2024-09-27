@@ -1,0 +1,144 @@
+---
+title: "one_factor_copula_results"
+output: html_document
+date: "2024-09-12"
+---
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(FactorCopula)
+load("/Users/ruiliu/Desktop/research/results/gaussian_1f_whole_data.RData")
+load("/Users/ruiliu/Desktop/research/results/gumbel_1f_whole_data.RData")
+load("/Users/ruiliu/Desktop/research/results/rgumbel_1f_whole_data.RData")
+load("/Users/ruiliu/Desktop/research/results/clayton_1f_whole_data.RData")
+
+load("/Users/ruiliu/Desktop/research/results/package_runtime_one_factor.RData")
+load("/Users/ruiliu/Desktop/research/results/my_code_runtime_one_factor.RData")
+load("/Users/ruiliu/Desktop/research/results/log_likelihood_package_one_factor.RData")
+load("/Users/ruiliu/Desktop/research/results/log_likelihood_mycode_one_factor.RData")
+```
+
+```{r}
+results = data.frame("Copula" = c("Gaussian", "Clayton", "Gumbel", "Reflected Gumbel"))
+results['package runtime (seconds)'] = round(package_runtime, 2)
+results['our code runtime (seconds)'] = round(my_code_runtime, 2)
+results['package log likelihood'] = round(log_likelihood_package, 2)
+results['our code log likelihood'] = round(log_likelihood_mycode, 2)
+#results = t(results)
+
+table_grob <- tableGrob(results, rows = NULL)
+
+# Save as JPEG
+jpeg("/Users/ruiliu/Desktop/research/plots/runtime_one_factor.jpeg", width = 10.5, height = 1.5, units = "in", res = 300)
+grid.draw(table_grob)
+dev.off()
+```
+
+```{r}
+compute_AIC <- function(log_likelihood, num_parameters) {
+  aic <- 2 * num_parameters - 2 * log_likelihood
+  return(aic)
+}
+
+compute_BIC <- function(log_likelihood, num_parameters, num_observations) {
+  bic <- num_parameters * log(num_observations) - 2 * log_likelihood
+  return(bic)
+}
+power_func = function(coin, d, p){
+  out = 1 - coin/p
+  out = out^d
+  return(out)
+}
+
+power_tail_dependence = function(df, d, p){
+  coin_columns = colnames(df)
+  #power_func_df = as.data.frame(lapply(df, function(col) lapply(col, power_func, d = d, p = p)))
+  df[df > 0.5] = NA
+  power_func_df = as.data.frame(apply(df,1:2, power_func, d = d, p = p))
+  colnames(power_func_df) = colnames(df)
+  power_tail_dependence_df = data.frame(matrix(NA, nrow = length(coin_columns), ncol = length(coin_columns)))
+  colnames(power_tail_dependence_df) = coin_columns
+  rownames(power_tail_dependence_df) = coin_columns
+ 
+ for (i in 1:length(coin_columns)){
+   #cat(sprintf("Completed %d out of %d iterations\n", i, length(coin_columns)))
+   for (j in 1:length(coin_columns)){
+     tmp1 = power_func_df[, coin_columns[i]]
+     tmp2 = power_func_df[, coin_columns[j]]
+     
+     na_positions <- is.na(tmp1) | is.na(tmp2)
+     tmp1 <- tmp1[!na_positions]
+     tmp2 <- tmp2[!na_positions]
+     power_tail_dependence_df[coin_columns[i], coin_columns[j]] = cor(tmp1, tmp2)
+   }
+ }
+ return(power_tail_dependence_df)
+}
+```
+
+```{r AIC BIC}
+AIC = c(compute_AIC(-gaussian_1f_whole_data$minimum, num_parameters = ncol(unif_df)), 
+        compute_AIC(-clayton_1f_whole_data$minimum, num_parameters = ncol(unif_df)),
+        compute_AIC(-gumbel_1f_whole_data$minimum, num_parameters = ncol(unif_df)), 
+        compute_AIC(-rgumbel_1f_whole_data$minimum, num_parameters = ncol(unif_df)))
+BIC = c(compute_BIC(-gaussian_1f_whole_data$minimum, num_parameters = ncol(unif_df), num_observations = nrow(unif_df)),
+        compute_BIC(-clayton_1f_whole_data$minimum, num_parameters = ncol(unif_df), num_observations = nrow(unif_df)),
+        compute_BIC(-gumbel_1f_whole_data$minimum, num_parameters = ncol(unif_df), num_observations = nrow(unif_df)),
+        compute_BIC(-rgumbel_1f_whole_data$minimum, num_parameters = ncol(unif_df), num_observations = nrow(unif_df)))
+models = c('Gaussian', 'Clayton', 'Gumbel', 'Reflected Gumbel')
+```
+
+```{r tail_weighted dependence}
+lower_tail_dependence_data = power_tail_dependence(df = unif_df, p = 0.5, d = 6)
+upper_tail_dependence_data = power_tail_dependence(df = 1-unif_df, p = 0.5, d = 6)
+lower_tail_dependence_mse = c()
+upper_tail_dependence_mse = c()
+####################
+simulated_fitted_gaussian = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)), theta = gaussian_1f_whole_data$estimate, copF1 = rep('bvn', (ncol(unif_df))))
+colnames(simulated_fitted_gaussian) = colnames(unif_df)
+lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1- simulated_fitted_gaussian, p = 0.5, d = 6)
+lower_tail_dependence_mse = c(lower_tail_dependence_mse, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+upper_tail_dependence_mse = c(upper_tail_dependence_mse, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+####################
+theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), clayton_1f_whole_data$estimate, rep(1, ncol(unif_df)))
+simulated_fitted_clayton = r1factor(n = nrow(unif_df), d1 = ncol(unif_df), 
+                                    theta = theta, 
+                                    copF1 = rep('bb1', ncol(unif_df)))
+colnames(simulated_fitted_clayton) = colnames(unif_df)
+lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1- simulated_fitted_clayton, p = 0.5, d = 6)
+lower_tail_dependence_mse = c(lower_tail_dependence_mse, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+upper_tail_dependence_mse = c(upper_tail_dependence_mse, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+######################
+simulated_fitted_gumbel = r1factor(n = nrow(unif_df), d1 = ncol(unif_df), 
+                                    theta = gumbel_1f_whole_data$estimate, 
+                                    copF1 = rep('gum', ncol(unif_df)))
+colnames(simulated_fitted_gumbel) = colnames(unif_df)
+lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1- simulated_fitted_gumbel, p = 0.5, d = 6)
+lower_tail_dependence_mse = c(lower_tail_dependence_mse, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+upper_tail_dependence_mse = c(upper_tail_dependence_mse, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+###################
+simulated_fitted_rgumbel = r1factor(n = nrow(unif_df), d1 = ncol(unif_df), 
+                                    theta = rgumbel_1f_whole_data$estimate, 
+                                    copF1 = rep('rgum', ncol(unif_df)))
+colnames(simulated_fitted_rgumbel) = colnames(unif_df)
+lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1- simulated_fitted_rgumbel, p = 0.5, d = 6)
+lower_tail_dependence_mse = c(lower_tail_dependence_mse, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+upper_tail_dependence_mse = c(upper_tail_dependence_mse, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+```
+
+```{r}
+results = data.frame("Copula" = models)
+results['AIC'] = round(AIC, 2)
+results['BIC'] = round(BIC, 2)
+results['upper tail dependence \n measure squared error'] = round(upper_tail_dependence_mse, 2)
+results['lower tail dependence \n measure squared error'] = round(lower_tail_dependence_mse, 2)
+jpeg("/Users/ruiliu/Desktop/research/plots/performance_base.jpeg", width = 1200, height = 300, res = 150)
+grid.table(results, rows = NULL)
+dev.off()
+```

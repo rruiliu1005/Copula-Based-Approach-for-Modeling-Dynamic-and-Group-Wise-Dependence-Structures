@@ -1,0 +1,90 @@
+---
+title: "3. Gaussian Copula with time varying covariance"
+output: html_document
+date: "2024-05-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+setwd('/Users/ruiliu/Desktop/research')
+unif_df = read.csv("./data/unif_df.csv")
+```
+
+```{r}
+library(quantmod)
+start = min(unif_df$openTime)
+end = max(unif_df$openTime)
+
+# Download Gold data using GLD ETF
+getSymbols("GLD", src = "yahoo", auto.assign = TRUE)
+gold_data <- Cl(GLD)  # Closing prices for GLD
+gold_df <- data.frame(openTime = index(gold_data), Close = as.numeric(gold_data))
+gold_df = gold_df[(gold_df$openTime >= "2020-12-20") & (gold_df$openTime <= end), ]
+# Download S&P 500 data using SPY ETF
+getSymbols("SPY", src = "yahoo", auto.assign = TRUE)
+sp500_data <- Cl(SPY)  # Closing prices for SPY
+SPY_df <- data.frame(openTime = index(sp500_data), Close = as.numeric(sp500_data))
+SPY_df = SPY_df[(SPY_df$openTime >= "2020-12-20") & (SPY_df$openTime <= end), ]
+
+# Download Commodity Index data using DBC ETF
+getSymbols("^SPGSCI", src = "yahoo", auto.assign = TRUE)
+commodity_data <- Cl(DBC)  # Closing prices for DBC
+commodity_df <- data.frame(openTime = index(commodity_data), Close = as.numeric(commodity_data))
+commodity_df = commodity_df[(commodity_df$openTime >= "2020-12-20") & (commodity_df$openTime <= end),]
+
+driving_variables_df = merge(unif_df['openTime'], gold_df, by = 'openTime',  all = TRUE)
+driving_variables_df = merge(driving_variables_df, SPY_df, by = 'openTime',  all = TRUE)
+driving_variables_df = merge(driving_variables_df, commodity_df, by = 'openTime',  all = TRUE)
+colnames(driving_variables_df) = c('openTime', "GLD", 'SPY', "SPGSCI")
+driving_variables_df = driving_variables_df[order(driving_variables_df$openTime), ]
+driving_variables_df$GLD = na.locf(driving_variables_df$GLD, na.rm=FALSE)
+driving_variables_df$SPY = na.locf(driving_variables_df$SPY, na.rm=FALSE)
+driving_variables_df$SPGSCI = na.locf(driving_variables_df$SPGSCI, na.rm=FALSE)
+driving_variables_df = driving_variables_df[(driving_variables_df$openTime >= start) & (driving_variables_df$openTime <= end),]
+# Fill missing values with the previous observation
+```
+
+```{r}
+bivariate_gaussian_copulas <- function(u1, u2, rho) {
+  x1 <- qnorm(u1, mean = 0, sd = 1)
+  x2 <- qnorm(u2, mean = 0, sd = 1)
+  #rho <- min(max(rho, -1 + 1e-12), 1 - 1e-12)
+  out <- exp(-1/2 * (x1^2 + x2^2 - 2 * rho * x1 * x2) / (1 - rho^2) + 1/2 * (x1^2 + x2^2))/sqrt(1-rho^2)
+  return(out)
+}
+```
+
+
+```{r One Driving Variable}
+d = ncol(unif_df) - 1
+Tdat = nrow(unif_df)
+Sigma = array(dim = c(d, d))
+for (i in 1:d){
+  for (j in 1:d){
+    if (i >= j){
+      Sigma[i,j] = 1/(1+exp(-(psi_0 + gamma * driving_variables_df$SPY[t])))
+    }
+  }
+}
+
+x_t = array(dim = d)
+for (i in 1:d){
+  x_t[i] = qnorm(     pnorm(u,v,rho)     )/pnorm()
+}
+
+for (t in 1:Tdat){
+  for (i in 1:d) {
+    for (j in 1:d) {
+      if (i >= j) {
+        term = 1+exp(- psi_0 + gamma*driving_variables_df$SPY[t])
+        Sigma[i,j,t] = 1/term
+      }
+    }
+  }
+}
+```

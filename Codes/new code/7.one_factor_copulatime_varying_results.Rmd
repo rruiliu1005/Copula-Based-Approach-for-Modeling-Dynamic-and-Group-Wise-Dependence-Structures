@@ -1,0 +1,2223 @@
+---
+title: "one_factor_copula_results"
+output: html_document
+date: "2024-09-10"
+---
+```{r}
+library(gridExtra)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tibble)
+
+unif_df = read.csv('/Users/ruiliu/Desktop/research/data/unif_df.csv')
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_720_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_720_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_720_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_rgumbel_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_rgumbel_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_rgumbel_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_rgumbel_720_days.RData")
+```
+
+#Time 
+```{r}
+load("/Users/ruiliu/Desktop/research/results/package_times_non_parallel_gaussian.RData")
+load("/Users/ruiliu/Desktop/research/results/package_times_non_parallel_gumbel.RData")
+load("/Users/ruiliu/Desktop/research/results/package_times_non_parallel_rgumbel.RData")
+
+load("/Users/ruiliu/Desktop/research/results/gaussian_time_varying_times.RData")
+load("/Users/ruiliu/Desktop/research/results/clayton_time_varying_times.RData")
+load("/Users/ruiliu/Desktop/research/results/gumbel_time_varying_times.RData")
+load("/Users/ruiliu/Desktop/research/results/rgumbel_time_varying_times.RData")
+```
+
+```{r}
+package_times_non_parallel_gaussian <- package_times_non_parallel_gaussian / 3600
+package_times_non_parallel_gumbel <- package_times_non_parallel_gumbel / 3600
+package_times_non_parallel_rgumbel <- package_times_non_parallel_rgumbel / 3600
+
+gaussian_times <- gaussian_times / 3600
+clayton_times <- clayton_times / 3600
+gumbel_times <- gumbel_times / 3600
+rgumbel_times <- rgumbel_times / 3600
+
+times_df <- data.frame(
+  'rolling_window_90_days' = c(gaussian_times[1], 
+                package_times_non_parallel_gaussian[1], 
+                clayton_times[1], 
+                NA,
+                gumbel_times[1], 
+                package_times_non_parallel_gumbel[1], 
+                rgumbel_times[1],
+                package_times_non_parallel_rgumbel[1]),
+              
+  'rolling_window_180_days' = c(gaussian_times[2], 
+                package_times_non_parallel_gaussian[2], 
+                clayton_times[2], 
+                NA,
+                gumbel_times[2], 
+                package_times_non_parallel_gumbel[2], 
+                rgumbel_times[2],
+                package_times_non_parallel_rgumbel[2]),
+  
+  'rolling_window_360_days' = c(gaussian_times[3], 
+                package_times_non_parallel_gaussian[3], 
+                clayton_times[3], 
+                NA,
+                gumbel_times[3], 
+                package_times_non_parallel_gumbel[3], 
+                rgumbel_times[3],
+                package_times_non_parallel_rgumbel[3]),
+  
+  'rolling_window_720_days' = c(gaussian_times[4], 
+                package_times_non_parallel_gaussian[4], 
+                clayton_times[4], 
+                NA,
+                gumbel_times[4], 
+                package_times_non_parallel_gumbel[4], 
+                rgumbel_times[4],
+                package_times_non_parallel_rgumbel[4])
+)
+
+rownames(times_df) <- c("Gaussian (our code)",
+                        "Gaussian (package)", 
+                        "Clayton (our code)", 
+                        "Clayton (package)", 
+                        "Gumbel (our code)", 
+                        "Gumbel (package)", 
+                        "Reflected Gumbel (our code)", 
+                        "Reflected Gumbel (package)")
+times_df = round(times_df, 3)
+times_df <- rownames_to_column(times_df, var = "Model (hours)")
+table_grob <- tableGrob(times_df, rows = NULL)
+jpeg("/Users/ruiliu/Desktop/research/plots/dynamic_times.jpeg", width = 11.5, height = 3, units = "in", res = 300)
+grid.draw(table_grob)
+dev.off()
+```
+
+#Plots 
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_gaussian_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_clayton_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_clayton_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_clayton_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+dev.off()
+```
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(5, 4)) 
+second_element <- result_clayton_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+
+# Loop through each series and plot
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+
+# Loop through each series and plot
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+
+# Loop through each series and plot
+dates = as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_rgumbel_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_rgumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(unif_df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+
+```{r}
+library(FactorCopula)
+
+compute_AIC <- function(log_likelihood, num_parameters) {
+  aic <- 2 * num_parameters - 2 * log_likelihood
+  return(aic)
+}
+
+compute_BIC <- function(log_likelihood, num_parameters, num_observations) {
+  bic <- num_parameters * log(num_observations) - 2 * log_likelihood
+  return(bic)
+}
+
+power_func = function(coin, d, p){
+  out = 1 - coin/p
+  out = out^d
+  return(out)
+}
+
+power_tail_dependence = function(df, d, p){
+  coin_columns = colnames(df)
+  #power_func_df = as.data.frame(lapply(df, function(col) lapply(col, power_func, d = d, p = p)))
+  df[df > 0.5] = NA
+  power_func_df = as.data.frame(apply(df,1:2, power_func, d = d, p = p))
+  colnames(power_func_df) = colnames(df)
+  power_tail_dependence_df = data.frame(matrix(NA, nrow = length(coin_columns), ncol = length(coin_columns)))
+  colnames(power_tail_dependence_df) = coin_columns
+  rownames(power_tail_dependence_df) = coin_columns
+ 
+ for (i in 1:length(coin_columns)){
+   #cat(sprintf("Completed %d out of %d iterations\n", i, length(coin_columns)))
+   for (j in 1:length(coin_columns)){
+     tmp1 = power_func_df[, coin_columns[i]]
+     tmp2 = power_func_df[, coin_columns[j]]
+     
+     na_positions <- is.na(tmp1) | is.na(tmp2)
+     tmp1 <- tmp1[!na_positions]
+     tmp2 <- tmp2[!na_positions]
+     power_tail_dependence_df[coin_columns[i], coin_columns[j]] = cor(tmp1, tmp2)
+   }
+ }
+ return(power_tail_dependence_df)
+}
+```
+
+```{r}
+period = 90
+lower_tail_dependence_mse_gaussian = c()
+upper_tail_dependence_mse_gaussian = c()
+lower_tail_dependence_mse_clayton = c()
+upper_tail_dependence_mse_clayton = c()
+lower_tail_dependence_mse_gumbel = c()
+upper_tail_dependence_mse_gumbel = c()
+lower_tail_dependence_mse_rgumbel = c()
+upper_tail_dependence_mse_rgumbel = c()
+
+progress <- txtProgressBar(min = 0, max = (nrow(unif_df) - period), style = 3)
+
+for (i in 1:(nrow(unif_df) - period)) {
+  tmp <- unif_df[i:(i + period), 1:ncol(unif_df)-1]
+  setTxtProgressBar(progress, i)  
+  
+   lower_tail_dependence_data = power_tail_dependence(df = tmp, p = 0.5, d = 6)
+   upper_tail_dependence_data= power_tail_dependence(df = 1- tmp, p = 0.5, d = 6)
+   
+   simulated_fitted_gaussian = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gaussian_90_days$estimates[[i]], copF1 = rep('bvn', (ncol(tmp))))
+   colnames(simulated_fitted_gaussian) = colnames(tmp)
+   lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1-simulated_fitted_gaussian, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gaussian = c(lower_tail_dependence_mse_gaussian, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gaussian = c(upper_tail_dependence_mse_gaussian, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+   
+   theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), result_clayton_90_days$estimates[[i]], rep(1, ncol(tmp)))
+   simulated_fitted_clayton = r1factor(n = nrow(tmp), d1 = ncol(tmp), 
+                                    theta = theta, 
+                                    copF1 = rep('bb1', ncol(tmp)))
+   colnames(simulated_fitted_clayton) = colnames(tmp)
+   lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1-simulated_fitted_clayton, p = 0.5, d = 6)
+   lower_tail_dependence_mse_clayton = c(lower_tail_dependence_mse_clayton, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_clayton = c(upper_tail_dependence_mse_clayton, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+
+   
+   simulated_fitted_gumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gumbel_90_days$estimates[[i]], copF1 = rep('gum', (ncol(tmp))))
+   colnames(simulated_fitted_gumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1-simulated_fitted_gumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gumbel = c(lower_tail_dependence_mse_gumbel, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gumbel = c(upper_tail_dependence_mse_gumbel, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+   
+   simulated_fitted_rgumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_rgumbel_90_days$estimates[[i]], copF1 = rep('rgum', (ncol(tmp))))
+   colnames(simulated_fitted_rgumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1-simulated_fitted_rgumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_rgumbel = c(lower_tail_dependence_mse_rgumbel, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_rgumbel = c(upper_tail_dependence_mse_rgumbel, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+}
+```
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/result_ts.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(4, 3), mar = c(1.5, 1.5, 2, 1.5), oma = c(0,0,0,0)) 
+ylim_range <- range(c(-result_gaussian_90_days$likelihoods, -result_clayton_90_days$likelihoods, -result_gumbel_90_days$likelihoods, -result_rgumbel_90_days$likelihoods))
+dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_90, -result_gaussian_90_days$likelihoods, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_90, -result_clayton_90_days$likelihoods, col = "red")
+lines(dates_90, -result_gumbel_90_days$likelihoods, col = "green")
+lines(dates_90, -result_rgumbel_90_days$likelihoods, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Log Likelihood (rolling window = 90)")
+
+AIC_gaussian_90_days <- sapply(-result_gaussian_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_clayton_90_days <- sapply(-result_clayton_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_gumbel_90_days <- sapply(-result_gumbel_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_rgumbel_90_days <- sapply(-result_rgumbel_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+ylim_range <- range(c(AIC_gaussian_90_days, AIC_clayton_90_days, AIC_gumbel_90_days, AIC_rgumbel_90_days))
+plot(dates_90, AIC_gaussian_90_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_90, AIC_clayton_90_days, col = "red")
+lines(dates_90, AIC_gumbel_90_days, col = "green")
+lines(dates_90, AIC_rgumbel_90_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("AIC (rolling window = 90)")
+
+BIC_gaussian_90_days <- sapply(-result_gaussian_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+BIC_clayton_90_days <- sapply(-result_clayton_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+BIC_gumbel_90_days <- sapply(-result_gumbel_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+BIC_rgumbel_90_days <- sapply(-result_rgumbel_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+ylim_range <- range(c(BIC_gaussian_90_days, BIC_clayton_90_days, BIC_gumbel_90_days, BIC_rgumbel_90_days), num_observations = 90)
+plot(dates_90, BIC_gaussian_90_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_90, BIC_clayton_90_days, col = "red")
+lines(dates_90, BIC_gumbel_90_days, col = "green")
+lines(dates_90, BIC_rgumbel_90_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("BIC (rolling window = 90)")
+
+ylim_range <- range(c(-result_gaussian_180_days$likelihoods, -result_clayton_180_days$likelihoods, -result_gumbel_180_days$likelihoods, -result_rgumbel_180_days$likelihoods))
+dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_180, -result_gaussian_180_days$likelihoods, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_180, -result_clayton_180_days$likelihoods, col = "red")
+lines(dates_180, -result_gumbel_180_days$likelihoods, col = "green")
+lines(dates_180, -result_rgumbel_180_days$likelihoods, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Log Likelihood (rolling window = 180)")
+
+AIC_gaussian_180_days <- sapply(-result_gaussian_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_clayton_180_days <- sapply(-result_clayton_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_gumbel_180_days <- sapply(-result_gumbel_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_rgumbel_180_days <- sapply(-result_rgumbel_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+ylim_range <- range(c(AIC_gaussian_180_days, AIC_clayton_180_days, AIC_gumbel_180_days, AIC_rgumbel_180_days))
+plot(dates_180, AIC_gaussian_180_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_180, AIC_clayton_180_days, col = "red")
+lines(dates_180, AIC_gumbel_180_days, col = "green")
+lines(dates_180, AIC_rgumbel_180_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("AIC (rolling window = 180)")
+
+BIC_gaussian_180_days <- sapply(-result_gaussian_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+BIC_clayton_180_days <- sapply(-result_clayton_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+BIC_gumbel_180_days <- sapply(-result_gumbel_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+BIC_rgumbel_180_days <- sapply(-result_rgumbel_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+ylim_range <- range(c(BIC_gaussian_180_days, BIC_clayton_180_days, BIC_gumbel_180_days, BIC_rgumbel_180_days), num_observations = 180)
+plot(dates_180, BIC_gaussian_180_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_180, BIC_clayton_180_days, col = "red")
+lines(dates_180, BIC_gumbel_180_days, col = "green")
+lines(dates_180, BIC_rgumbel_180_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("BIC (rolling window = 180)")
+
+ylim_range <- range(c(-result_gaussian_360_days$likelihoods, -result_clayton_360_days$likelihoods, -result_gumbel_360_days$likelihoods, -result_rgumbel_360_days$likelihoods))
+dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_360, -result_gaussian_360_days$likelihoods, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_360, -result_clayton_360_days$likelihoods, col = "red")
+lines(dates_360, -result_gumbel_360_days$likelihoods, col = "green")
+lines(dates_360, -result_rgumbel_360_days$likelihoods, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Log Likelihood (rolling window = 360)")
+
+AIC_gaussian_360_days <- sapply(-result_gaussian_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_clayton_360_days <- sapply(-result_clayton_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_gumbel_360_days <- sapply(-result_gumbel_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_rgumbel_360_days <- sapply(-result_rgumbel_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+ylim_range <- range(c(AIC_gaussian_360_days, AIC_clayton_360_days, AIC_gumbel_360_days, AIC_rgumbel_360_days))
+plot(dates_360, AIC_gaussian_360_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_360, AIC_clayton_360_days, col = "red")
+lines(dates_360, AIC_gumbel_360_days, col = "green")
+lines(dates_360, AIC_rgumbel_360_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("AIC (rolling window = 360)")
+
+BIC_gaussian_360_days <- sapply(-result_gaussian_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+BIC_clayton_360_days <- sapply(-result_clayton_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+BIC_gumbel_360_days <- sapply(-result_gumbel_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+BIC_rgumbel_360_days <- sapply(-result_rgumbel_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+ylim_range <- range(c(BIC_gaussian_360_days, BIC_clayton_360_days, BIC_gumbel_360_days, BIC_rgumbel_360_days), num_observations = 360)
+plot(dates_360, BIC_gaussian_360_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_360, BIC_clayton_360_days, col = "red")
+lines(dates_360, BIC_gumbel_360_days, col = "green")
+lines(dates_360, BIC_rgumbel_360_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("BIC (rolling window = 360)")
+
+ylim_range <- range(c(-result_gaussian_720_days$likelihoods, -result_clayton_720_days$likelihoods, -result_gumbel_720_days$likelihoods, -result_rgumbel_720_days$likelihoods))
+dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_720, -result_gaussian_720_days$likelihoods, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_720, -result_clayton_720_days$likelihoods, col = "red")
+lines(dates_720, -result_gumbel_720_days$likelihoods, col = "green")
+lines(dates_720, -result_rgumbel_720_days$likelihoods, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Log Likelihood (rolling window = 720)")
+
+AIC_gaussian_720_days <- sapply(-result_gaussian_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_clayton_720_days <- sapply(-result_clayton_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_gumbel_720_days <- sapply(-result_gumbel_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+AIC_rgumbel_720_days <- sapply(-result_rgumbel_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+ylim_range <- range(c(AIC_gaussian_720_days, AIC_clayton_720_days, AIC_gumbel_720_days, AIC_rgumbel_720_days))
+plot(dates_720, AIC_gaussian_720_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_720, AIC_clayton_720_days, col = "red")
+lines(dates_720, AIC_gumbel_720_days, col = "green")
+lines(dates_720, AIC_rgumbel_720_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("AIC (rolling window = 720)")
+
+BIC_gaussian_720_days <- sapply(-result_gaussian_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+BIC_clayton_720_days <- sapply(-result_clayton_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+BIC_gumbel_720_days <- sapply(-result_gumbel_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+BIC_rgumbel_720_days <- sapply(-result_rgumbel_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+ylim_range <- range(c(BIC_gaussian_720_days, BIC_clayton_720_days, BIC_gumbel_720_days, BIC_rgumbel_720_days), num_observations = 720)
+plot(dates_720, BIC_gaussian_720_days, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_720, BIC_clayton_720_days, col = "red")
+lines(dates_720, BIC_gumbel_720_days, col = "green")
+lines(dates_720, BIC_rgumbel_720_days, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("BIC (rolling window = 720)")
+dev.off()
+```
+
+```{r}
+# jpeg("/Users/ruiliu/Desktop/research/plots/result_ts.jpeg", width = 8, height = 10, units = "in", res = 300)
+# par(mfrow = c(4, 3), mar = c(1.5, 1.5, 2, 1.5), oma = c(0,0,0,0)) 
+# 
+# ######################### Likelihood ###############################
+# # Calculate all log-likelihood values
+# log_likelihood_90 <- -result_gaussian_90_days$likelihoods
+# log_likelihood_180 <- -result_gaussian_180_days$likelihoods
+# log_likelihood_360 <- -result_gaussian_360_days$likelihoods
+# log_likelihood_720 <- -result_gaussian_720_days$likelihoods
+# 
+# ylim_range <- range(c(log_likelihood_90, log_likelihood_180, log_likelihood_360, log_likelihood_720))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, log_likelihood_90, type = "l", ylim = ylim_range, 
+#      ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7,  
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))  
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, log_likelihood_180, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, log_likelihood_360, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, log_likelihood_720, col = "purple")
+# 
+# legend("topleft", legend = c("Gaussian with rolling window size = 90", 
+#                               "Gaussian with rolling window size = 180", 
+#                               "Gaussian with rolling window size = 360", 
+#                               "Gaussian with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("Log Likelihood Function Values")
+# 
+# ############################### AIC ###############################
+# AIC_gaussian_90_days <- sapply(-result_gaussian_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gaussian_180_days <- sapply(-result_gaussian_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gaussian_360_days <- sapply(-result_gaussian_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gaussian_720_days <- sapply(-result_gaussian_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# 
+# ylim_range <- range(c(AIC_gaussian_90_days, AIC_gaussian_180_days, AIC_gaussian_360_days, AIC_gaussian_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, AIC_gaussian_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "AIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, AIC_gaussian_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, AIC_gaussian_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, AIC_gaussian_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Gaussian with rolling window size = 90", 
+#                               "Gaussian with rolling window size = 180", 
+#                               "Gaussian with rolling window size = 360", 
+#                               "Gaussian with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("AIC")
+# 
+# ############################### BIC ###############################
+# BIC_gaussian_90_days <- sapply(-result_gaussian_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+# BIC_gaussian_180_days <- sapply(-result_gaussian_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+# BIC_gaussian_360_days <- sapply(-result_gaussian_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+# BIC_gaussian_720_days <- sapply(-result_gaussian_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+# 
+# ylim_range <- range(c(BIC_gaussian_90_days, BIC_gaussian_180_days, BIC_gaussian_360_days, BIC_gaussian_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, BIC_gaussian_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "BIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, BIC_gaussian_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, BIC_gaussian_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, BIC_gaussian_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Gaussian with rolling window size = 90", 
+#                               "Gaussian with rolling window size = 180", 
+#                               "Gaussian with rolling window size = 360", 
+#                               "Gaussian with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("BIC")
+# ######################### Likelihood ###############################
+# # Calculate all log-likelihood values
+# log_likelihood_90 <- -result_clayton_90_days$likelihoods
+# log_likelihood_180 <- -result_clayton_180_days$likelihoods
+# log_likelihood_360 <- -result_clayton_360_days$likelihoods
+# log_likelihood_720 <- -result_clayton_720_days$likelihoods
+# 
+# ylim_range <- range(c(log_likelihood_90, log_likelihood_180, log_likelihood_360, log_likelihood_720))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, log_likelihood_90, type = "l", ylim = ylim_range, 
+#      ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7,  # Make axis labels smaller
+#      cex.axis = 0.6, # Make tick labels smaller
+#      mgp = c(2, 0.5, 0))  # Adjust label margins
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, log_likelihood_180, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, log_likelihood_360, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, log_likelihood_720, col = "purple")
+# 
+# legend("topleft", legend = c("Clayton with rolling window size = 90", 
+#                               "Clayton with rolling window size = 180", 
+#                               "Clayton with rolling window size = 360", 
+#                               "Clayton with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("Log Likelihood Function Values")
+# 
+# ############################### AIC ###############################
+# AIC_clayton_90_days <- sapply(-result_clayton_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_clayton_180_days <- sapply(-result_clayton_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_clayton_360_days <- sapply(-result_clayton_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_clayton_720_days <- sapply(-result_clayton_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# 
+# ylim_range <- range(c(AIC_clayton_90_days, AIC_clayton_180_days, AIC_clayton_360_days, AIC_clayton_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, AIC_clayton_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "AIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, AIC_clayton_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, AIC_clayton_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, AIC_clayton_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Clayton with rolling window size = 90", 
+#                               "Clayton with rolling window size = 180", 
+#                               "Clayton with rolling window size = 360", 
+#                               "Clayton with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("AIC")
+# 
+# ############################### BIC ###############################
+# BIC_clayton_90_days <- sapply(-result_clayton_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+# BIC_clayton_180_days <- sapply(-result_clayton_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+# BIC_clayton_360_days <- sapply(-result_clayton_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+# BIC_clayton_720_days <- sapply(-result_clayton_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+# 
+# ylim_range <- range(c(BIC_clayton_90_days, BIC_clayton_180_days, BIC_clayton_360_days, BIC_clayton_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, BIC_clayton_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "BIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, BIC_clayton_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, BIC_clayton_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, BIC_clayton_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Clayton with rolling window size = 90", 
+#                               "Clayton with rolling window size = 180", 
+#                               "Clayton with rolling window size = 360", 
+#                               "Clayton with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("BIC")
+# 
+# ######################### Likelihood ###############################
+# # Calculate all log-likelihood values
+# log_likelihood_90 <- -result_gumbel_90_days$likelihoods
+# log_likelihood_180 <- -result_gumbel_180_days$likelihoods
+# log_likelihood_360 <- -result_gumbel_360_days$likelihoods
+# log_likelihood_720 <- -result_gumbel_720_days$likelihoods
+# 
+# ylim_range <- range(c(log_likelihood_90, log_likelihood_180, log_likelihood_360, log_likelihood_720))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, log_likelihood_90, type = "l", ylim = ylim_range, 
+#      ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7,  # Make axis labels smaller
+#      cex.axis = 0.6, # Make tick labels smaller
+#      mgp = c(2, 0.5, 0))  # Adjust label margins
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, log_likelihood_180, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, log_likelihood_360, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, log_likelihood_720, col = "purple")
+# 
+# legend("topleft", legend = c("Gumbel with rolling window size = 90", 
+#                               "Gumbel with rolling window size = 180", 
+#                               "Gumbel with rolling window size = 360", 
+#                               "Gumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("Log Likelihood Function Values")
+# 
+# ############################### AIC ###############################
+# AIC_gumbel_90_days <- sapply(-result_gumbel_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gumbel_180_days <- sapply(-result_gumbel_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gumbel_360_days <- sapply(-result_gumbel_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_gumbel_720_days <- sapply(-result_gumbel_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# 
+# ylim_range <- range(c(AIC_gumbel_90_days, AIC_gumbel_180_days, AIC_gumbel_360_days, AIC_gumbel_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, AIC_gumbel_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "AIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, AIC_gumbel_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, AIC_gumbel_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, AIC_gumbel_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Gumbel with rolling window size = 90", 
+#                               "Gumbel with rolling window size = 180", 
+#                               "Gumbel with rolling window size = 360", 
+#                               "Gumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("AIC")
+# 
+# ############################### BIC ###############################
+# BIC_gumbel_90_days <- sapply(-result_gumbel_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+# BIC_gumbel_180_days <- sapply(-result_gumbel_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+# BIC_gumbel_360_days <- sapply(-result_gumbel_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+# BIC_gumbel_720_days <- sapply(-result_gumbel_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+# 
+# ylim_range <- range(c(BIC_gumbel_90_days, BIC_gumbel_180_days, BIC_gumbel_360_days, BIC_gumbel_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, BIC_gumbel_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "BIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, BIC_gumbel_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, BIC_gumbel_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, BIC_gumbel_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Gumbel with rolling window size = 90", 
+#                               "Gumbel with rolling window size = 180", 
+#                               "Gumbel with rolling window size = 360", 
+#                               "Gumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("BIC")
+# 
+# ######################### Likelihood ###############################
+# # Calculate all log-likelihood values
+# log_likelihood_90 <- -result_rgumbel_90_days$likelihoods
+# log_likelihood_180 <- -result_rgumbel_180_days$likelihoods
+# log_likelihood_360 <- -result_rgumbel_360_days$likelihoods
+# log_likelihood_720 <- -result_rgumbel_720_days$likelihoods
+# 
+# ylim_range <- range(c(log_likelihood_90, log_likelihood_180, log_likelihood_360, log_likelihood_720))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, log_likelihood_90, type = "l", ylim = ylim_range, 
+#      ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7,  # Make axis labels smaller
+#      cex.axis = 0.6, # Make tick labels smaller
+#      mgp = c(2, 0.5, 0))  # Adjust label margins
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, log_likelihood_180, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, log_likelihood_360, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, log_likelihood_720, col = "purple")
+# 
+# legend("topleft", legend = c("Reflected gumbel with rolling window size = 90", 
+#                               "Reflected gumbel with rolling window size = 180", 
+#                               "Reflected gumbel with rolling window size = 360", 
+#                               "Reflected gumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("Log Likelihood Function Values")
+# 
+# ############################### AIC ###############################
+# AIC_rgumbel_90_days <- sapply(-result_rgumbel_90_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_rgumbel_180_days <- sapply(-result_rgumbel_180_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_rgumbel_360_days <- sapply(-result_rgumbel_360_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# AIC_rgumbel_720_days <- sapply(-result_rgumbel_720_days$likelihoods, compute_AIC, num_parameters = ncol(unif_df))
+# 
+# ylim_range <- range(c(AIC_rgumbel_90_days, AIC_rgumbel_180_days, AIC_rgumbel_360_days, AIC_rgumbel_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, AIC_rgumbel_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "AIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, AIC_rgumbel_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, AIC_rgumbel_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, AIC_rgumbel_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Rgumbel with rolling window size = 90", 
+#                               "Rgumbel with rolling window size = 180", 
+#                               "Rgumbel with rolling window size = 360", 
+#                               "Rgumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("AIC")
+# 
+# ############################### BIC ###############################
+# BIC_rgumbel_90_days <- sapply(-result_rgumbel_90_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 90)
+# BIC_rgumbel_180_days <- sapply(-result_rgumbel_180_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 180)
+# BIC_rgumbel_360_days <- sapply(-result_rgumbel_360_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 360)
+# BIC_rgumbel_720_days <- sapply(-result_rgumbel_720_days$likelihoods, compute_BIC, num_parameters = ncol(unif_df), num_observations = 720)
+# 
+# ylim_range <- range(c(BIC_rgumbel_90_days, BIC_rgumbel_180_days, BIC_rgumbel_360_days, BIC_rgumbel_720_days))
+# 
+# dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+# plot(dates_90, BIC_rgumbel_90_days, type = "l", ylim = ylim_range, 
+#      ylab = "BIC Value", xlab = "Date", col = "blue", 
+#      cex.lab = 0.7, 
+#      cex.axis = 0.6, 
+#      mgp = c(2, 0.5, 0))
+# 
+# dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_180, BIC_rgumbel_180_days, col = "red")
+# 
+# dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_360, BIC_rgumbel_360_days, col = "green")
+# 
+# dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+# lines(dates_720, BIC_rgumbel_720_days, col = "purple")
+# 
+# legend("bottomleft", legend = c("Reflected gumbel with rolling window size = 90", 
+#                               "Reflected gumbel with rolling window size = 180", 
+#                               "Reflected gumbel with rolling window size = 360", 
+#                               "Reflected gumbel with rolling window size = 720"),
+#        col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+# title("BIC")
+# dev.off()
+```
+
+```{r}
+Likelihoods_90_days = c(mean(-result_gaussian_90_days$likelihoods), mean(-result_clayton_90_days$likelihoods), mean(-result_gumbel_90_days$likelihoods), mean(-result_rgumbel_90_days$likelihoods))
+AIC_90_days = c(mean(AIC_gaussian_90_days), mean(AIC_clayton_90_days), mean(AIC_gumbel_90_days), mean(AIC_rgumbel_90_days))
+BIC_90_days = c(mean(BIC_gaussian_90_days), mean(BIC_clayton_90_days), mean(BIC_gumbel_90_days), mean(BIC_rgumbel_90_days))
+Likelihoods_180_days = c(mean(-result_gaussian_180_days$likelihoods), mean(-result_clayton_180_days$likelihoods), mean(-result_gumbel_180_days$likelihoods), mean(-result_rgumbel_180_days$likelihoods))
+AIC_180_days = c(mean(AIC_gaussian_180_days), mean(AIC_clayton_180_days), mean(AIC_gumbel_180_days), mean(AIC_rgumbel_180_days))
+BIC_180_days = c(mean(BIC_gaussian_180_days), mean(BIC_clayton_180_days), mean(BIC_gumbel_180_days), mean(BIC_rgumbel_180_days))
+Likelihoods_360_days = c(mean(-result_gaussian_360_days$likelihoods), mean(-result_clayton_360_days$likelihoods), mean(-result_gumbel_360_days$likelihoods), mean(-result_rgumbel_360_days$likelihoods))
+AIC_360_days = c(mean(AIC_gaussian_360_days), mean(AIC_clayton_360_days), mean(AIC_gumbel_360_days), mean(AIC_rgumbel_360_days))
+BIC_360_days = c(mean(BIC_gaussian_360_days), mean(BIC_clayton_360_days), mean(BIC_gumbel_360_days), mean(BIC_rgumbel_360_days))
+Likelihoods_720_days = c(mean(-result_gaussian_720_days$likelihoods), mean(-result_clayton_720_days$likelihoods), mean(-result_gumbel_720_days$likelihoods), mean(-result_rgumbel_720_days$likelihoods))
+AIC_720_days = c(mean(AIC_gaussian_720_days), mean(AIC_clayton_720_days), mean(AIC_gumbel_720_days), mean(AIC_rgumbel_720_days))
+BIC_720_days = c(mean(BIC_gaussian_720_days), mean(BIC_clayton_720_days), mean(BIC_gumbel_720_days), mean(BIC_rgumbel_720_days))
+
+table_data <- data.frame(
+  Metric = c("Likelihood (rolling window = 90 days)", "AIC (rolling window = 90 days)", "BIC (rolling window = 90 days)",
+             "Likelihood (rolling window = 180 days)", "AIC (rolling window = 180 days)", "BIC (rolling window = 180 days)",
+             "Likelihood (rolling window = 360 days)", "AIC (rolling window = 360 days)", "BIC (rolling window = 360 days)",
+             "Likelihood (rolling window = 720 days)", "AIC (rolling window = 720 days)", "BIC (rolling window = 720 days)"),
+  Gaussian = c(Likelihoods_90_days[1], AIC_90_days[1], BIC_90_days[1],
+               Likelihoods_180_days[1], AIC_180_days[1], BIC_180_days[1],
+               Likelihoods_360_days[1], AIC_360_days[1], BIC_360_days[1],
+               Likelihoods_720_days[1], AIC_720_days[1], BIC_720_days[1]),
+  Clayton = c(Likelihoods_90_days[2], AIC_90_days[2], BIC_90_days[2],
+              Likelihoods_180_days[2], AIC_180_days[2], BIC_180_days[2],
+              Likelihoods_360_days[2], AIC_360_days[2], BIC_360_days[2],
+              Likelihoods_720_days[2], AIC_720_days[2], BIC_720_days[2]),
+  Gumbel = c(Likelihoods_90_days[3], AIC_90_days[3], BIC_90_days[3],
+             Likelihoods_180_days[3], AIC_180_days[3], BIC_180_days[3],
+             Likelihoods_360_days[3], AIC_360_days[3], BIC_360_days[3],
+             Likelihoods_720_days[3], AIC_720_days[3], BIC_720_days[3]),
+  Reflected_Gumbel = c(Likelihoods_90_days[4], AIC_90_days[4], BIC_90_days[4],
+                       Likelihoods_180_days[4], AIC_180_days[4], BIC_180_days[4],
+                       Likelihoods_360_days[4], AIC_360_days[4], BIC_360_days[4],
+                       Likelihoods_720_days[4], AIC_720_days[4], BIC_720_days[4]))
+
+jpeg("/Users/ruiliu/Desktop/research/plots/time_varying_average_results.jpeg", width = 8, height = 4, units = "in", res = 300)
+grid.table(table_data, row = NULL)
+
+dev.off()
+```
+
+```{r}
+period = 90
+lower_tail_dependence_mse_gaussian_90 = c()
+upper_tail_dependence_mse_gaussian_90 = c()
+lower_tail_dependence_mse_clayton_90 = c()
+upper_tail_dependence_mse_clayton_90 = c()
+lower_tail_dependence_mse_gumbel_90 = c()
+upper_tail_dependence_mse_gumbel_90 = c()
+lower_tail_dependence_mse_rgumbel_90 = c()
+upper_tail_dependence_mse_rgumbel_90 = c()
+
+progress <- txtProgressBar(min = 0, max = (nrow(unif_df) - period), style = 3)
+
+for (i in 1:(nrow(unif_df) - period)) {
+  tmp <- unif_df[i:(i + period), 1:ncol(unif_df)-1]
+  setTxtProgressBar(progress, i)  
+  
+   lower_tail_dependence_data = power_tail_dependence(df = tmp, p = 0.5, d = 6)
+   upper_tail_dependence_data= power_tail_dependence(df = 1- tmp, p = 0.5, d = 6)
+   
+   simulated_fitted_gaussian = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gaussian_90_days$estimates[[i]], copF1 = rep('bvn', (ncol(tmp))))
+   colnames(simulated_fitted_gaussian) = colnames(tmp)
+   lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1-simulated_fitted_gaussian, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gaussian_90 = c(lower_tail_dependence_mse_gaussian_90, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gaussian_90 = c(upper_tail_dependence_mse_gaussian_90, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+   
+   theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), result_clayton_90_days$estimates[[i]], rep(1, ncol(tmp)))
+   simulated_fitted_clayton = r1factor(n = nrow(tmp), d1 = ncol(tmp), 
+                                    theta = theta, 
+                                    copF1 = rep('bb1', ncol(tmp)))
+   colnames(simulated_fitted_clayton) = colnames(tmp)
+   lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1-simulated_fitted_clayton, p = 0.5, d = 6)
+   lower_tail_dependence_mse_clayton_90 = c(lower_tail_dependence_mse_clayton_90, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_clayton_90 = c(upper_tail_dependence_mse_clayton_90, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+
+   
+   simulated_fitted_gumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gumbel_90_days$estimates[[i]], copF1 = rep('gum', (ncol(tmp))))
+   colnames(simulated_fitted_gumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1-simulated_fitted_gumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gumbel_90 = c(lower_tail_dependence_mse_gumbel_90, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gumbel_90 = c(upper_tail_dependence_mse_gumbel_90, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+   
+   simulated_fitted_rgumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_rgumbel_90_days$estimates[[i]], copF1 = rep('rgum', (ncol(tmp))))
+   colnames(simulated_fitted_rgumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1-simulated_fitted_rgumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_rgumbel_90 = c(lower_tail_dependence_mse_rgumbel_90, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_rgumbel_90 = c(upper_tail_dependence_mse_rgumbel_90, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+}
+```
+
+```{r}
+period = 180
+lower_tail_dependence_mse_gaussian_180 = c()
+upper_tail_dependence_mse_gaussian_180 = c()
+lower_tail_dependence_mse_clayton_180 = c()
+upper_tail_dependence_mse_clayton_180 = c()
+lower_tail_dependence_mse_gumbel_180 = c()
+upper_tail_dependence_mse_gumbel_180 = c()
+lower_tail_dependence_mse_rgumbel_180 = c()
+upper_tail_dependence_mse_rgumbel_180 = c()
+
+progress <- txtProgressBar(min = 0, max = (nrow(unif_df) - period), style = 3)
+
+for (i in 1:(nrow(unif_df) - period)) {
+  tmp <- unif_df[i:(i + period), 1:ncol(unif_df)-1]
+  setTxtProgressBar(progress, i)  
+  
+   lower_tail_dependence_data = power_tail_dependence(df = tmp, p = 0.5, d = 6)
+   upper_tail_dependence_data= power_tail_dependence(df = 1- tmp, p = 0.5, d = 6)
+   
+   simulated_fitted_gaussian = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gaussian_180_days$estimates[[i]], copF1 = rep('bvn', (ncol(tmp))))
+   colnames(simulated_fitted_gaussian) = colnames(tmp)
+   lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1-simulated_fitted_gaussian, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gaussian_180 = c(lower_tail_dependence_mse_gaussian_180, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gaussian_180 = c(upper_tail_dependence_mse_gaussian_180, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+   
+   theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), result_clayton_180_days$estimates[[i]], rep(1, ncol(tmp)))
+   simulated_fitted_clayton = r1factor(n = nrow(tmp), d1 = ncol(tmp), 
+                                    theta = theta, 
+                                    copF1 = rep('bb1', ncol(tmp)))
+   colnames(simulated_fitted_clayton) = colnames(tmp)
+   lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1-simulated_fitted_clayton, p = 0.5, d = 6)
+   lower_tail_dependence_mse_clayton_180 = c(lower_tail_dependence_mse_clayton_180, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_clayton_180 = c(upper_tail_dependence_mse_clayton_180, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+
+   
+   simulated_fitted_gumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gumbel_180_days$estimates[[i]], copF1 = rep('gum', (ncol(tmp))))
+   colnames(simulated_fitted_gumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1-simulated_fitted_gumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gumbel_180 = c(lower_tail_dependence_mse_gumbel_180, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gumbel_180 = c(upper_tail_dependence_mse_gumbel_180, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+   
+   simulated_fitted_rgumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_rgumbel_180_days$estimates[[i]], copF1 = rep('rgum', (ncol(tmp))))
+   colnames(simulated_fitted_rgumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1-simulated_fitted_rgumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_rgumbel_180 = c(lower_tail_dependence_mse_rgumbel_180, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_rgumbel_180 = c(upper_tail_dependence_mse_rgumbel_180, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+}
+```
+
+```{r}
+period = 360
+lower_tail_dependence_mse_gaussian_360 = c()
+upper_tail_dependence_mse_gaussian_360 = c()
+lower_tail_dependence_mse_clayton_360 = c()
+upper_tail_dependence_mse_clayton_360 = c()
+lower_tail_dependence_mse_gumbel_360 = c()
+upper_tail_dependence_mse_gumbel_360 = c()
+lower_tail_dependence_mse_rgumbel_360 = c()
+upper_tail_dependence_mse_rgumbel_360 = c()
+
+progress <- txtProgressBar(min = 0, max = (nrow(unif_df) - period), style = 3)
+
+for (i in 1:(nrow(unif_df) - period)) {
+  tmp <- unif_df[i:(i + period), 1:ncol(unif_df)-1]
+  setTxtProgressBar(progress, i)  
+  
+   lower_tail_dependence_data = power_tail_dependence(df = tmp, p = 0.5, d = 6)
+   upper_tail_dependence_data= power_tail_dependence(df = 1- tmp, p = 0.5, d = 6)
+   
+   simulated_fitted_gaussian = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gaussian_360_days$estimates[[i]], copF1 = rep('bvn', (ncol(tmp))))
+   colnames(simulated_fitted_gaussian) = colnames(tmp)
+   lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1-simulated_fitted_gaussian, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gaussian_360 = c(lower_tail_dependence_mse_gaussian_360, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gaussian_360 = c(upper_tail_dependence_mse_gaussian_360, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+   
+   theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), result_clayton_360_days$estimates[[i]], rep(1, ncol(tmp)))
+   simulated_fitted_clayton = r1factor(n = nrow(tmp), d1 = ncol(tmp), 
+                                    theta = theta, 
+                                    copF1 = rep('bb1', ncol(tmp)))
+   colnames(simulated_fitted_clayton) = colnames(tmp)
+   lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1-simulated_fitted_clayton, p = 0.5, d = 6)
+   lower_tail_dependence_mse_clayton_360 = c(lower_tail_dependence_mse_clayton_360, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_clayton_360 = c(upper_tail_dependence_mse_clayton_360, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+
+   
+   simulated_fitted_gumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gumbel_360_days$estimates[[i]], copF1 = rep('gum', (ncol(tmp))))
+   colnames(simulated_fitted_gumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1-simulated_fitted_gumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gumbel_360 = c(lower_tail_dependence_mse_gumbel_360, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gumbel_360 = c(upper_tail_dependence_mse_gumbel_360, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+   
+   simulated_fitted_rgumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_rgumbel_360_days$estimates[[i]], copF1 = rep('rgum', (ncol(tmp))))
+   colnames(simulated_fitted_rgumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1-simulated_fitted_rgumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_rgumbel_360 = c(lower_tail_dependence_mse_rgumbel_360, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_rgumbel_360 = c(upper_tail_dependence_mse_rgumbel_360, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+}
+```
+
+```{r}
+period = 720
+lower_tail_dependence_mse_gaussian_720 = c()
+upper_tail_dependence_mse_gaussian_720 = c()
+lower_tail_dependence_mse_clayton_720 = c()
+upper_tail_dependence_mse_clayton_720 = c()
+lower_tail_dependence_mse_gumbel_720 = c()
+upper_tail_dependence_mse_gumbel_720 = c()
+lower_tail_dependence_mse_rgumbel_720 = c()
+upper_tail_dependence_mse_rgumbel_720 = c()
+
+progress <- txtProgressBar(min = 0, max = (nrow(unif_df) - period), style = 3)
+
+for (i in 1:(nrow(unif_df) - period)) {
+  tmp <- unif_df[i:(i + period), 1:ncol(unif_df)-1]
+  setTxtProgressBar(progress, i)
+
+   lower_tail_dependence_data = power_tail_dependence(df = tmp, p = 0.5, d = 6)
+   upper_tail_dependence_data= power_tail_dependence(df = 1- tmp, p = 0.5, d = 6)
+
+   simulated_fitted_gaussian = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gaussian_720_days$estimates[[i]], copF1 = rep('bvn', (ncol(tmp))))
+   colnames(simulated_fitted_gaussian) = colnames(tmp)
+   lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = 1-simulated_fitted_gaussian, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gaussian_720 = c(lower_tail_dependence_mse_gaussian_720, sum((lower_tail_dependence_fitted_gaussian - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gaussian_720 = c(upper_tail_dependence_mse_gaussian_720, sum((upper_tail_dependence_fitted_gaussian - upper_tail_dependence_data)^2))
+
+   theta = Map(function(x,y) mat <- matrix(c(x, y), nrow = 1, ncol = 2), result_clayton_720_days$estimates[[i]], rep(1, ncol(tmp)))
+   simulated_fitted_clayton = r1factor(n = nrow(tmp), d1 = ncol(tmp),
+                                    theta = theta,
+                                    copF1 = rep('bb1', ncol(tmp)))
+   colnames(simulated_fitted_clayton) = colnames(tmp)
+   lower_tail_dependence_fitted_clayton = power_tail_dependence(df = simulated_fitted_clayton, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_clayton = power_tail_dependence(df = 1-simulated_fitted_clayton, p = 0.5, d = 6)
+   lower_tail_dependence_mse_clayton_720 = c(lower_tail_dependence_mse_clayton_720, sum((lower_tail_dependence_fitted_clayton - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_clayton_720 = c(upper_tail_dependence_mse_clayton_720, sum((upper_tail_dependence_fitted_clayton - upper_tail_dependence_data)^2))
+
+
+   simulated_fitted_gumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_gumbel_720_days$estimates[[i]], copF1 = rep('gum', (ncol(tmp))))
+   colnames(simulated_fitted_gumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = 1-simulated_fitted_gumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_gumbel_720 = c(lower_tail_dependence_mse_gumbel_720, sum((lower_tail_dependence_fitted_gumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_gumbel_720 = c(upper_tail_dependence_mse_gumbel_720, sum((upper_tail_dependence_fitted_gumbel - upper_tail_dependence_data)^2))
+   
+   simulated_fitted_rgumbel = r1factor(n = nrow(tmp),  d1 = (ncol(tmp)), theta = result_rgumbel_720_days$estimates[[i]], copF1 = rep('rgum', (ncol(tmp))))
+   colnames(simulated_fitted_rgumbel) = colnames(tmp)
+   lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+   upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = 1-simulated_fitted_rgumbel, p = 0.5, d = 6)
+   lower_tail_dependence_mse_rgumbel_720 = c(lower_tail_dependence_mse_rgumbel_720, sum((lower_tail_dependence_fitted_rgumbel - lower_tail_dependence_data)^2))
+   upper_tail_dependence_mse_rgumbel_720 = c(upper_tail_dependence_mse_rgumbel_720, sum((upper_tail_dependence_fitted_rgumbel - upper_tail_dependence_data)^2))
+}
+```
+
+
+```{r}
+jpeg("/Users/ruiliu/Desktop/research/plots/dynamic_dependence_tails.jpeg", width = 8, height = 10, units = "in", res = 300)
+par(mfrow = c(4, 2), mar = c(1.5, 1.5, 2, 1.5), oma = c(0,0,0,0)) 
+
+ylim_range <- range(c(upper_tail_dependence_mse_gaussian_90, upper_tail_dependence_mse_clayton_90, upper_tail_dependence_mse_gumbel_90, upper_tail_dependence_mse_rgumbel_90))
+dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_90, upper_tail_dependence_mse_gaussian_90, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_90, upper_tail_dependence_mse_clayton_90, col = "red")
+lines(dates_90, upper_tail_dependence_mse_gumbel_90, col = "green")
+lines(dates_90, upper_tail_dependence_mse_rgumbel_90, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Upper Tail Dependence Squared Error (rolling window = 90)")
+
+ylim_range <- range(c(lower_tail_dependence_mse_gaussian_90, lower_tail_dependence_mse_clayton_90, lower_tail_dependence_mse_gumbel_90, lower_tail_dependence_mse_rgumbel_90))
+dates_90 <- as.Date(unif_df[91:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_90, lower_tail_dependence_mse_gaussian_90, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_90, lower_tail_dependence_mse_clayton_90, col = "red")
+lines(dates_90, lower_tail_dependence_mse_gumbel_90, col = "green")
+lines(dates_90, lower_tail_dependence_mse_rgumbel_90, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Lower Tail Dependence Squared Error (rolling window = 90)")
+
+
+ylim_range <- range(c(upper_tail_dependence_mse_gaussian_180, upper_tail_dependence_mse_clayton_180, upper_tail_dependence_mse_gumbel_180, upper_tail_dependence_mse_rgumbel_180))
+dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_180, upper_tail_dependence_mse_gaussian_180, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_180, upper_tail_dependence_mse_clayton_180, col = "red")
+lines(dates_180, upper_tail_dependence_mse_gumbel_180, col = "green")
+lines(dates_180, upper_tail_dependence_mse_rgumbel_180, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Upper Tail Dependence Squared Error (rolling window = 180)")
+
+ylim_range <- range(c(lower_tail_dependence_mse_gaussian_180, lower_tail_dependence_mse_clayton_180, lower_tail_dependence_mse_gumbel_180, lower_tail_dependence_mse_rgumbel_180))
+dates_180 <- as.Date(unif_df[181:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_180, lower_tail_dependence_mse_gaussian_180, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_180, lower_tail_dependence_mse_clayton_180, col = "red")
+lines(dates_180, lower_tail_dependence_mse_gumbel_180, col = "green")
+lines(dates_180, lower_tail_dependence_mse_rgumbel_180, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Lower Tail Dependence Squared Error (rolling window = 180)")
+
+ylim_range <- range(c(upper_tail_dependence_mse_gaussian_360, upper_tail_dependence_mse_clayton_360, upper_tail_dependence_mse_gumbel_360, upper_tail_dependence_mse_rgumbel_360))
+dates_360 <- as.Date(unif_df[361:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_360, upper_tail_dependence_mse_gaussian_360, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_360, upper_tail_dependence_mse_clayton_360, col = "red")
+lines(dates_360, upper_tail_dependence_mse_gumbel_360, col = "green")
+lines(dates_360, upper_tail_dependence_mse_rgumbel_360, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Upper Tail Dependence Squared Error (rolling window = 360)")
+
+ylim_range <- range(c(lower_tail_dependence_mse_gaussian_360, lower_tail_dependence_mse_clayton_360, lower_tail_dependence_mse_gumbel_360, lower_tail_dependence_mse_rgumbel_360))
+plot(dates_360, lower_tail_dependence_mse_gaussian_360, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_360, lower_tail_dependence_mse_clayton_360, col = "red")
+lines(dates_360, lower_tail_dependence_mse_gumbel_360, col = "green")
+lines(dates_360, lower_tail_dependence_mse_rgumbel_360, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Lower Tail Dependence Squared Error (rolling window = 360)")
+
+
+ylim_range <- range(c(upper_tail_dependence_mse_gaussian_720, upper_tail_dependence_mse_clayton_720, upper_tail_dependence_mse_gumbel_720, upper_tail_dependence_mse_rgumbel_720))
+dates_720 <- as.Date(unif_df[721:nrow(unif_df), 21], format = "%Y-%m-%d")
+plot(dates_720, upper_tail_dependence_mse_gaussian_720, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_720, upper_tail_dependence_mse_clayton_720, col = "red")
+lines(dates_720, upper_tail_dependence_mse_gumbel_720, col = "green")
+lines(dates_720, upper_tail_dependence_mse_rgumbel_720, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Upper Tail Dependence Squared Error (rolling window = 720)")
+
+ylim_range <- range(c(lower_tail_dependence_mse_gaussian_720, lower_tail_dependence_mse_clayton_720, lower_tail_dependence_mse_gumbel_720, lower_tail_dependence_mse_rgumbel_720))
+plot(dates_720, lower_tail_dependence_mse_gaussian_720, type = "l", ylim = ylim_range, 
+     ylab = "Log Likelihood Value", xlab = "Date", col = "blue", 
+     cex.lab = 0.7,  
+     cex.axis = 0.6, 
+     mgp = c(2, 0.5, 0))  
+lines(dates_720, lower_tail_dependence_mse_clayton_720, col = "red")
+lines(dates_720, lower_tail_dependence_mse_gumbel_720, col = "green")
+lines(dates_720, lower_tail_dependence_mse_rgumbel_720, col = "purple")
+legend("topleft", legend = c("Gaussian", 
+                              "Clayton", 
+                              "Gumbel", 
+                              "Reflected Gumbel"),
+       col = c("blue", "red", "green", "purple"), lty = 1, cex = 0.5)
+title("Lower Tail Dependence Squared Error (rolling window = 720)")
+```
+
+```{r}
+data = read.csv('/Users/ruiliu/Desktop/research/data/USDT_perp_futures_0902_daily.csv')
+
+#convert datetime format 
+data$openTime = as.POSIXct(data$openTime/1000, origin="1970-01-01")
+data$openTime = as.Date(data$openTime)
+
+#keep coins that has the longest trading history and the largest average trading volume 
+startdates = data %>%
+  group_by(inst) %>%
+  summarise(min_time = min(openTime))
+
+startdates$start_date_rank = rank(startdates$min_time)
+
+trading_vol = data %>%
+  group_by(inst)%>%
+  summarise(average_volume = mean(QuoteAssetVolume))
+
+trading_vol$trading_vol_rank = rank(-trading_vol$average_volume) 
+
+summary = inner_join(startdates, trading_vol, by = 'inst')
+
+summary$total_rank = (summary$start_date_rank*0.5 + summary$trading_vol_rank*0.5)
+
+print(summary[order(summary$total_rank, decreasing = FALSE), ], n = 30)
+
+#keep selected 20 coins
+inst_to_keep = summary[order(summary$total_rank, decreasing = FALSE), ][1:20,]$inst
+tmp = data[,"inst"]
+data = data[tmp %in% inst_to_keep, ]
+print("Assets used for analysis")
+print(inst_to_keep)
+#inst_to_keep = c('BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'SOLUSDT', 'XLMUSDT', 'MATICUSDT', 'TRXUSDT', 
+#                 'LTCUSDT', 'DOTUSDT', 'AVAXUSDT', 'NEARUSDT', 'FILUSDT', 'ATOMUSDT', 'DASHUSDT', 'LINKUSDT', 'UNIUSDT', 'XMRUSDT')
+
+#calculate daily returns
+data <- data[, c("openTime", "inst", "Close")]
+data <- data %>% arrange(inst, openTime) 
+data = unique(data) #remove duplicated rows
+daily_returns <- data %>%
+  group_by(inst) %>%
+  mutate(daily_return = (Close / lag(Close) - 1))
+#calculate log returns
+daily_returns['log_returns'] = log(daily_returns['daily_return']+1)
+daily_returns <- na.omit(daily_returns)
+#make sure the data all have the same dates
+tmp = daily_returns %>%  group_by(inst) %>% summarise(max_openTime = max(openTime))
+tmp = min(tmp$max_openTime)
+tmp1 = daily_returns %>%  group_by(inst) %>% summarise(min_openTime = min(openTime))
+tmp1 = max(tmp1$min_openTime)
+daily_returns = daily_returns[(daily_returns$openTime >= tmp1)&(daily_returns$openTime <= tmp), ]
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+
+plot_list <- list() 
+
+remove_outliers <- function(x, lower_quantile = 0.01, upper_quantile = 0.99) {
+  qnt <- quantile(x, probs = c(lower_quantile, upper_quantile), na.rm = TRUE)
+  x[x >= qnt[1] & x <= qnt[2]]  
+}
+
+for (i in 1:20) {
+  # Filter for the specific series
+  df_i <- df %>% filter(series == colnames(unif_df)[i])
+  
+  # Filter daily_returns to match the corresponding asset and dates
+  df_returns_filtered <- daily_returns %>%
+    filter(inst == colnames(unif_df)[i] & openTime %in% dates_90)
+  
+  # Remove outliers from both squared errors and daily returns
+  filtered_squared_error <- remove_outliers(df_i$value)
+  filtered_daily_return <- remove_outliers(df_returns_filtered$daily_return)
+  
+  # Define y-axis limits based on the filtered values
+  ymin <- min(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  ymax <- max(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  
+  # Create the ggplot object
+  p <- ggplot(df_i, aes(x = dates)) +  
+    # Primary line: Kendall's Tau with varying color segments
+    geom_line(aes(y = value, color = best_model, group = 1), size = 0.8) +  
+    
+    # Secondary line: Daily Returns (grey color, with linetype and color mapped for legend)
+    geom_line(data = df_returns_filtered, aes(x = openTime, y = daily_return, color = "Daily Returns"), size = 0.5) +
+    
+    # Custom color scale for both best_model and Daily Returns
+    scale_color_manual(values = c("Gaussian" = "blue", 
+                                  "Clayton" = "red", 
+                                  "Gumbel" = "green", 
+                                  "Reflected Gumbel" = "purple", 
+                                  "Daily Returns" = "grey")) +
+    # Custom linetype for Daily Returns
+
+    # Set y-axis limits
+    ylim(ymin, ymax) +
+    
+    # Labels and titles
+    labs(title = colnames(unif_df)[i], x = element_blank(), y = "Kendall's Tau") +
+    
+    # Customize the theme
+    theme_minimal() +
+    theme(legend.position = "bottom", 
+          legend.text = element_text(size = 4), 
+          legend.title = element_blank(), 
+          panel.background = element_blank(), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) +
+    
+    # Ensure both color and linetype legends are shown
+    guides(color = guide_legend(title = "Legend"), linetype = guide_legend(title = "Legend"))
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Combine all the plots into a 4x5 grid
+combined_plot <- grid.arrange(grobs = plot_list, ncol = 4, nrow = 5)
+
+# Save the combined plot as a single image
+ggsave(
+  filename = "/Users/ruiliu/Desktop/research/plots/copula_switching_90_days_tau.jpeg", 
+  plot = combined_plot, 
+  width = 16, height = 20, units = "in", dpi = 300
+)
+
+# Display the best model count
+table(best_model_90)
+```
+
+```{r}
+period = 180 
+tail_dependence_mse_total_gaussian = upper_tail_dependence_mse_gaussian_180 + lower_tail_dependence_mse_gaussian_180
+tail_dependence_mse_total_clayton = upper_tail_dependence_mse_clayton_180 + lower_tail_dependence_mse_clayton_180
+tail_dependence_mse_total_gumbel = upper_tail_dependence_mse_gumbel_180 + lower_tail_dependence_mse_gumbel_180
+tail_dependence_mse_total_rgumbel = upper_tail_dependence_mse_rgumbel_180 + lower_tail_dependence_mse_rgumbel_180
+best_model_180 = c()
+best_tau_180 = c()
+for (i in 1:(nrow(unif_df) - period)) {
+  choices = c(tail_dependence_mse_total_gaussian[i], tail_dependence_mse_total_clayton[i], tail_dependence_mse_total_gumbel[i], tail_dependence_mse_total_rgumbel[i])
+  best = which.min(choices)
+  if (best == 1){
+    best_model_180[i] = 'Gaussian'
+    best_tau_180[[i]] = 2/pi*asin(result_gaussian_180_days$estimates[[i]])
+  }
+  else if (best == 2){
+    best_model_180[i] = 'Clayton'
+    best_tau_180[[i]] = result_clayton_180_days$estimates[[i]]/(result_clayton_180_days$estimates[[i]]+2)
+  }
+  else if (best == 3){
+    best_model_180[i] = "Gumbel"
+    best_tau_180[[i]] = 1-1/result_gumbel_180_days$estimates[[i]]
+  }
+  else if (best == 4){
+    best_model_180[i] = "Reflected Gumbel"
+    best_tau_180[[i]] = -(1-1/result_gumbel_180_days$estimates[[i]])
+  }  
+  if(best_tau_180[[i]][1] < 0){
+    best_tau_180[[i]] = -1*best_tau_180[[i]]
+  }
+} 
+matrix_data <- do.call(rbind, best_tau_180)
+df <- data.frame(
+  dates = rep(dates_180, times = 20), 
+  value = as.vector(matrix_data),   
+  series = rep(colnames(unif_df)[1:20], each = length(dates_180)), 
+  best_model = rep(best_model_180, times = 20)  
+)
+
+plot_list <- list() 
+
+remove_outliers <- function(x, lower_quantile = 0.01, upper_quantile = 0.99) {
+  qnt <- quantile(x, probs = c(lower_quantile, upper_quantile), na.rm = TRUE)
+  x[x >= qnt[1] & x <= qnt[2]]  
+}
+
+for (i in 1:20) {
+  # Filter for the specific series
+  df_i <- df %>% filter(series == colnames(unif_df)[i])
+  
+  # Filter daily_returns to match the corresponding asset and dates
+  df_returns_filtered <- daily_returns %>%
+    filter(inst == colnames(unif_df)[i] & openTime %in% dates_180)
+  
+  # Remove outliers from both squared errors and daily returns
+  filtered_squared_error <- remove_outliers(df_i$value)
+  filtered_daily_return <- remove_outliers(df_returns_filtered$daily_return)
+  
+  # Define y-axis limits based on the filtered values
+  ymin <- min(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  ymax <- max(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  
+  # Create the ggplot object
+  p <- ggplot(df_i, aes(x = dates)) +  
+    # Primary line: Kendall's Tau with varying color segments
+    geom_line(aes(y = value, color = best_model, group = 1), size = 0.8) +  
+    
+    # Secondary line: Daily Returns (grey color, with linetype and color mapped for legend)
+    geom_line(data = df_returns_filtered, aes(x = openTime, y = daily_return, color = "Daily Returns"), size = 0.5) +
+    
+    # Custom color scale for both best_model and Daily Returns
+    scale_color_manual(values = c("Gaussian" = "blue", 
+                                  "Clayton" = "red", 
+                                  "Gumbel" = "green", 
+                                  "Reflected Gumbel" = "purple", 
+                                  "Daily Returns" = "grey")) +
+    # Custom linetype for Daily Returns
+
+    # Set y-axis limits
+    ylim(ymin, ymax) +
+    
+    # Labels and titles
+    labs(title = colnames(unif_df)[i], x = element_blank(), y = "Kendall's Tau") +
+    
+    # Customize the theme
+    theme_minimal() +
+    theme(legend.position = "bottom", 
+          legend.text = element_text(size = 4), 
+          legend.title = element_blank(), 
+          panel.background = element_blank(), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) +
+    
+    # Ensure both color and linetype legends are shown
+    guides(color = guide_legend(title = "Legend"), linetype = guide_legend(title = "Legend"))
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Combine all the plots into a 4x5 grid
+combined_plot <- grid.arrange(grobs = plot_list, ncol = 4, nrow = 5)
+
+# Save the combined plot as a single image
+ggsave(
+  filename = "/Users/ruiliu/Desktop/research/plots/copula_switching_180_days_tau.jpeg", 
+  plot = combined_plot, 
+  width = 16, height = 20, units = "in", dpi = 300
+)
+
+# Display the best model count
+table(best_model_180)
+
+```
+
+```{r}
+period = 360 
+tail_dependence_mse_total_gaussian = upper_tail_dependence_mse_gaussian_360 + lower_tail_dependence_mse_gaussian_360
+tail_dependence_mse_total_clayton = upper_tail_dependence_mse_clayton_360 + lower_tail_dependence_mse_clayton_360
+tail_dependence_mse_total_gumbel = upper_tail_dependence_mse_gumbel_360 + lower_tail_dependence_mse_gumbel_360
+tail_dependence_mse_total_rgumbel = upper_tail_dependence_mse_rgumbel_360 + lower_tail_dependence_mse_rgumbel_360
+best_model_360 = c()
+best_tau_360 = c()
+for (i in 1:(nrow(unif_df) - period)) {
+  choices = c(tail_dependence_mse_total_gaussian[i], tail_dependence_mse_total_clayton[i], tail_dependence_mse_total_gumbel[i], tail_dependence_mse_total_rgumbel[i])
+  best = which.min(choices)
+  if (best == 1){
+    best_model_360[i] = 'Gaussian'
+    best_tau_360[[i]] = 2/pi*asin(result_gaussian_360_days$estimates[[i]])
+  }
+  else if (best == 2){
+    best_model_360[i] = 'Clayton'
+    best_tau_360[[i]] = result_clayton_360_days$estimates[[i]]/(result_clayton_360_days$estimates[[i]]+2)
+  }
+  else if (best == 3){
+    best_model_360[i] = "Gumbel"
+    best_tau_360[[i]] = 1-1/result_gumbel_360_days$estimates[[i]]
+  }
+  else if (best == 4){
+    best_model_360[i] = "Reflected Gumbel"
+    best_tau_360[[i]] = -(1-1/result_gumbel_360_days$estimates[[i]])
+  }  
+  if(best_tau_360[[i]][1] < 0){
+    best_tau_360[[i]] = -1*best_tau_360[[i]]
+  }
+} 
+matrix_data <- do.call(rbind, best_tau_360)
+df <- data.frame(
+  dates = rep(dates_360, times = 20), 
+  value = as.vector(matrix_data),   
+  series = rep(colnames(unif_df)[1:20], each = length(dates_360)), 
+  best_model = rep(best_model_360, times = 20)  
+)
+
+plot_list <- list() 
+
+remove_outliers <- function(x, lower_quantile = 0.01, upper_quantile = 0.99) {
+  qnt <- quantile(x, probs = c(lower_quantile, upper_quantile), na.rm = TRUE)
+  x[x >= qnt[1] & x <= qnt[2]]  
+}
+
+for (i in 1:20) {
+  # Filter for the specific series
+  df_i <- df %>% filter(series == colnames(unif_df)[i])
+  
+  # Filter daily_returns to match the corresponding asset and dates
+  df_returns_filtered <- daily_returns %>%
+    filter(inst == colnames(unif_df)[i] & openTime %in% dates_360)
+  
+  # Remove outliers from both squared errors and daily returns
+  filtered_squared_error <- remove_outliers(df_i$value)
+  filtered_daily_return <- remove_outliers(df_returns_filtered$daily_return)
+  
+  # Define y-axis limits based on the filtered values
+  ymin <- min(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  ymax <- max(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  
+  # Create the ggplot object
+  p <- ggplot(df_i, aes(x = dates)) +  
+    # Primary line: Kendall's Tau with varying color segments
+    geom_line(aes(y = value, color = best_model, group = 1), size = 0.8) +  
+    
+    # Secondary line: Daily Returns (grey color, with linetype and color mapped for legend)
+    geom_line(data = df_returns_filtered, aes(x = openTime, y = daily_return, color = "Daily Returns"), size = 0.5) +
+    
+    # Custom color scale for both best_model and Daily Returns
+    scale_color_manual(values = c("Gaussian" = "blue", 
+                                  "Clayton" = "red", 
+                                  "Gumbel" = "green", 
+                                  "Reflected Gumbel" = "purple", 
+                                  "Daily Returns" = "grey")) +
+    # Custom linetype for Daily Returns
+
+    # Set y-axis limits
+    ylim(ymin, ymax) +
+    
+    # Labels and titles
+    labs(title = colnames(unif_df)[i], x = element_blank(), y = "Kendall's Tau") +
+    
+    # Customize the theme
+    theme_minimal() +
+    theme(legend.position = "bottom", 
+          legend.text = element_text(size = 4), 
+          legend.title = element_blank(), 
+          panel.background = element_blank(), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) +
+    
+    # Ensure both color and linetype legends are shown
+    guides(color = guide_legend(title = "Legend"), linetype = guide_legend(title = "Legend"))
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Combine all the plots into a 4x5 grid
+combined_plot <- grid.arrange(grobs = plot_list, ncol = 4, nrow = 5)
+
+# Save the combined plot as a single image
+ggsave(
+  filename = "/Users/ruiliu/Desktop/research/plots/copula_switching_360_days_tau.jpeg", 
+  plot = combined_plot, 
+  width = 16, height = 20, units = "in", dpi = 300
+)
+
+# Display the best model count
+table(best_model_360)
+
+```
+
+
+```{r}
+period = 720 
+tail_dependence_mse_total_gaussian = upper_tail_dependence_mse_gaussian_720 + lower_tail_dependence_mse_gaussian_720
+tail_dependence_mse_total_clayton = upper_tail_dependence_mse_clayton_720 + lower_tail_dependence_mse_clayton_720
+tail_dependence_mse_total_gumbel = upper_tail_dependence_mse_gumbel_720 + lower_tail_dependence_mse_gumbel_720
+tail_dependence_mse_total_rgumbel = upper_tail_dependence_mse_rgumbel_720 + lower_tail_dependence_mse_rgumbel_720
+best_model_720 = c()
+best_tau_720 = c()
+for (i in 1:(nrow(unif_df) - period)) {
+  choices = c(tail_dependence_mse_total_gaussian[i], tail_dependence_mse_total_clayton[i], tail_dependence_mse_total_gumbel[i], tail_dependence_mse_total_rgumbel[i])
+  best = which.min(choices)
+  if (best == 1){
+    best_model_720[i] = 'Gaussian'
+    best_tau_720[[i]] = 2/pi*asin(result_gaussian_720_days$estimates[[i]])
+  }
+  else if (best == 2){
+    best_model_720[i] = 'Clayton'
+    best_tau_720[[i]] = result_clayton_720_days$estimates[[i]]/(result_clayton_720_days$estimates[[i]]+2)
+  }
+  else if (best == 3){
+    best_model_720[i] = "Gumbel"
+    best_tau_720[[i]] = 1-1/result_gumbel_720_days$estimates[[i]]
+  }
+  else if (best == 4){
+    best_model_720[i] = "Reflected Gumbel"
+    best_tau_720[[i]] = -(1-1/result_gumbel_720_days$estimates[[i]])
+  }  
+  if(best_tau_720[[i]][1] < 0){
+    best_tau_720[[i]] = -1*best_tau_720[[i]]
+  }
+} 
+matrix_data <- do.call(rbind, best_tau_720)
+df <- data.frame(
+  dates = rep(dates_720, times = 20), 
+  value = as.vector(matrix_data),   
+  series = rep(colnames(unif_df)[1:20], each = length(dates_720)), 
+  best_model = rep(best_model_720, times = 20)  
+)
+
+
+plot_list <- list() 
+
+remove_outliers <- function(x, lower_quantile = 0.01, upper_quantile = 0.99) {
+  qnt <- quantile(x, probs = c(lower_quantile, upper_quantile), na.rm = TRUE)
+  x[x >= qnt[1] & x <= qnt[2]]  
+}
+
+for (i in 1:20) {
+  # Filter for the specific series
+  df_i <- df %>% filter(series == colnames(unif_df)[i])
+  
+  # Filter daily_returns to match the corresponding asset and dates
+  df_returns_filtered <- daily_returns %>%
+    filter(inst == colnames(unif_df)[i] & openTime %in% dates_720)
+  
+  # Remove outliers from both squared errors and daily returns
+  filtered_squared_error <- remove_outliers(df_i$value)
+  filtered_daily_return <- remove_outliers(df_returns_filtered$daily_return)
+  
+  # Define y-axis limits based on the filtered values
+  ymin <- min(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  ymax <- max(filtered_squared_error, filtered_daily_return, na.rm = TRUE) * 1.1
+  
+  # Create the ggplot object
+  p <- ggplot(df_i, aes(x = dates)) +  
+    # Primary line: Kendall's Tau with varying color segments
+    geom_line(aes(y = value, color = best_model, group = 1), size = 0.8) +  
+    
+    # Secondary line: Daily Returns (grey color, with linetype and color mapped for legend)
+    geom_line(data = df_returns_filtered, aes(x = openTime, y = daily_return, color = "Daily Returns"), size = 0.5) +
+    
+    # Custom color scale for both best_model and Daily Returns
+    scale_color_manual(values = c("Gaussian" = "blue", 
+                                  "Clayton" = "red", 
+                                  "Gumbel" = "green", 
+                                  "Reflected Gumbel" = "purple", 
+                                  "Daily Returns" = "grey")) +
+    # Custom linetype for Daily Returns
+
+    # Set y-axis limits
+    ylim(ymin, ymax) +
+    
+    # Labels and titles
+    labs(title = colnames(unif_df)[i], x = element_blank(), y = "Kendall's Tau") +
+    
+    # Customize the theme
+    theme_minimal() +
+    theme(legend.position = "bottom", 
+          legend.text = element_text(size = 8), 
+          legend.title = element_blank(), 
+          panel.background = element_blank(), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) +
+    
+    # Ensure both color and linetype legends are shown
+    guides(color = guide_legend(title = "Legend"), linetype = guide_legend(title = "Legend"))
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Combine all the plots into a 4x5 grid
+combined_plot <- grid.arrange(grobs = plot_list, ncol = 4, nrow = 5)
+
+# Save the combined plot as a single image
+ggsave(
+  filename = "/Users/ruiliu/Desktop/research/plots/copula_switching_720_days_tau.jpeg", 
+  plot = combined_plot, 
+  width = 16, height = 20, units = "in", dpi = 300
+)
+
+# Display the best model count
+table(best_model_720)
+```

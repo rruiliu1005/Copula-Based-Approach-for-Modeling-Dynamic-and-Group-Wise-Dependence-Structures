@@ -1,0 +1,739 @@
+---
+title: "1. Stationarity and Marginal Distributions"
+author: "Rui Liu"
+date: "2024-05-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r}
+library(dplyr)
+library(tseries)
+library(tidyr)
+library(ggplot2)
+data = read.csv('/Users/ruiliu/Desktop/research/data/USDT_perp_futures_0902_daily.csv')
+inst_to_keep = c('BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'SOLUSDT', 'XLMUSDT', 'MATICUSDT', 'TRXUSDT', 
+        'LTCUSDT', 'DOTUSDT', 'AVAXUSDT', 'NEARUSDT', 'FILUSDT', 'ATOMUSDT', 'FTMUSDT', 'LINKUSDT', 'UNIUSDT', 'ETCUSDT')
+tmp = data[,"inst"]
+data = data[tmp %in% inst_to_keep, ]
+
+#data = data[,2:ncol(data)]
+data$openTime = as.POSIXct(data$openTime/1000, origin="1970-01-01")
+data$openTime = as.Date(data$openTime )
+startdates = data %>%
+   group_by(inst) %>%
+   summarise(min_time = min(openTime))
+
+keep = startdates[startdates$min_time <= as.Date('2021-01-02'), ]$inst
+data <- data %>%
+  filter(inst %in% keep)
+print(length(unique(data$inst)))
+
+data = data %>% dplyr::select(openTime, inst, Close)
+data <- data %>% arrange(inst, openTime)
+data = unique(data)
+daily_returns <- data %>%
+  group_by(inst) %>%
+  mutate(daily_return = (Close / lag(Close) - 1))
+
+daily_returns['log_returns'] = log(daily_returns['daily_return']+1)
+
+daily_returns <- na.omit(daily_returns)
+
+tmp = daily_returns %>%  group_by(inst) %>% summarise(max_openTime = max(openTime))
+tmp = min(tmp$max_openTime)
+daily_returns = daily_returns[daily_returns$openTime <= tmp, ]
+
+tmp = daily_returns %>%  group_by(inst) %>% summarise(min_openTime = min(openTime))
+tmp = min(tmp$min_openTime)
+daily_returns = daily_returns[daily_returns$openTime >= tmp, ]
+```
+
+```{r}
+p = ggplot(daily_returns, aes(x = openTime, y = daily_return)) +
+  geom_line(color = "blue") +  # Set the line color to blue for all plots
+  facet_wrap(~ inst, ncol = 2, nrow = 10, scales = "free_x") +  # 2 columns and 10 rows
+  labs(x = "Date",
+       y = "Daily Returns") +
+  theme_minimal() +  # Use a minimal theme for a clean look
+  theme(legend.position = "none") + 
+    ylim(-0.3, 0.3) # Remove the legend
+
+# Save the plot to fit an A4 page
+ggsave("/Users/ruiliu/Desktop/research/plots/daily_returns.jpg", plot = p, width = 8, height = 11, units = "in")
+```
+# 1. Test for Stationarity 
+
+Null hypothesis is that a unit root is present in a time series, the series is non-stationary and exhibits a systematic pattern
+```{r}
+library(knitr)
+library(ggplot2)
+library(ggpmisc)
+
+# Create the ADF results table
+adf_results <- daily_returns %>%
+  group_by(inst) %>%
+  summarise(adf_statistic = round(adf.test(log_returns, alternative = "stationary")$statistic, 2),
+            p_value = adf.test(log_returns, alternative = "stationary")$p.value,
+            .groups = 'drop') %>%
+  arrange(p_value)
+
+# Create a ggplot object with the table as a layer
+p <- ggplot() +
+  geom_table(aes(0.5, 0.5, label = list(adf_results))) +
+  theme_void()  # Removes axes and other plot elements
+
+# Save the plot as a PNG image
+ggsave("/Users/ruiliu/Desktop/research/plots/adf_results_table.png", plot = p, width = 8.27, height = 11.69, units = "in")
+
+```
+
+```{r}
+library(forecast)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+
+plot_acf_pacf_ts <- function(data, save_dir) {
+  # Create lists to store the plots
+  acf_plots <- list()
+  pacf_plots <- list()
+  
+  # Loop through each instrument
+  for (inst_name in unique(data$inst)) {
+    # Subset the data for the specific inst
+    sub_data <- filter(data, inst == inst_name)
+    
+    # Check if there's enough data to plot
+    if (nrow(sub_data) > 1) {
+      # Convert log_returns column to a ts object
+      log_returns_ts <- ts(sub_data$log_returns, frequency = 365)  # Example for daily data
+      
+      # Plot ACF using ggAcf
+      acf_plot <- ggAcf(log_returns_ts) + ggtitle(inst_name) +
+  theme(plot.title = element_text(size = 8), axis.title.x = element_text(size = 6),  # Change x-axis label size
+    axis.title.y = element_text(size = 6))
+      
+      # Plot PACF using ggPacf
+      pacf_plot <- ggPacf(log_returns_ts) + ggtitle(inst_name)+
+  theme(plot.title = element_text(size = 8), axis.title.x = element_text(size = 6),  # Change x-axis label size
+    axis.title.y = element_text(size = 6))
+      
+      # Store the plots in their respective lists
+      acf_plots[[paste0(inst_name, "_acf")]] <- acf_plot
+      pacf_plots[[paste0(inst_name, "_pacf")]] <- pacf_plot
+    } else {
+      cat(paste("Not enough data to plot for", inst_name, "\n"))
+    }
+  }
+  
+  # Arrange the ACF plots into a grid of 10 rows by 2 columns
+  combined_acf_plot <- marrangeGrob(grobs = acf_plots, nrow = 10, ncol = 2)
+  
+  # Arrange the PACF plots into a grid of 10 rows by 2 columns
+  combined_pacf_plot <- marrangeGrob(grobs = pacf_plots, nrow = 10, ncol = 2)
+  
+  # Save the combined ACF plot as a PDF fitting A4 size
+  ggsave(file.path(save_dir, "combined_acf_plots.jpg"), combined_acf_plot, width = 8, height = 11, units = "in")
+  
+  # Save the combined PACF plot as a PDF fitting A4 size
+  ggsave(file.path(save_dir, "combined_pacf_plots.jpg"), combined_pacf_plot, width = 8, height = 11, units = "in")
+  
+  cat("Saved combined ACF plots to", file.path(save_dir, "combined_acf_plots.pdf"), "\n")
+  cat("Saved combined PACF plots to", file.path(save_dir, "combined_pacf_plots.pdf"), "\n")
+}
+
+# Apply the function to your data
+plot_acf_pacf_ts(daily_returns, save_dir = "/Users/ruiliu/Desktop/research/plots/acfpacf")
+
+```
+
+
+# 2. Test for Independence 
+
+## 2.1Ljung-Box Test 
+Null hypothesis: there are no autocorrelations in the series at any of the lags tested.
+
+```{r}
+library(gridExtra)
+library(grid)
+library(dplyr)
+
+# Calculate the Box-Ljung p-values and the number of lags used
+Box_results <- daily_returns %>%
+  group_by(inst) %>%
+  summarise(
+    Box_p_value = if (length(log_returns) > 10) 
+                    Box.test(log_returns, lag = min(10, length(log_returns) - 1), type = "Ljung-Box")$p.value 
+                  else 
+                    NA_real_,
+    n_lags = if (length(log_returns) > 10) 
+               min(10, length(log_returns) - 1) 
+             else 
+               NA_integer_,  # Adding the number of lags used
+    .groups = 'drop'
+  )
+
+# Round the p-values to two decimal places
+Box_results <- Box_results %>%
+  mutate(Box_p_value = sprintf("%.2f", Box_p_value))
+
+# Arrange results by p-value
+Box_results <- Box_results %>%
+  arrange(Box_p_value)
+
+# Split the data into two equal parts for formatting into 10x4 layout
+Box_results_part1 <- Box_results[1:10, ]
+Box_results_part2 <- Box_results[11:20, ]
+
+# Combine the two parts into a single data frame for the table
+Box_results_matrix <- cbind(Box_results_part1, Box_results_part2)
+colnames(Box_results_matrix) <- c("asset", "p-value", "lags", "asset", "p-value", "lags")
+
+# Convert to a table grob (graphical object), ensuring no row names
+table_grob <- tableGrob(Box_results_matrix, rows = NULL)  # Setting rows = NULL removes row numbers
+
+# Calculate the width and height of the table
+table_width <- convertWidth(sum(table_grob$widths), "in", valueOnly = TRUE)
+table_height <- convertHeight(sum(table_grob$heights), "in", valueOnly = TRUE)
+
+# Save the table as a JPEG image with the exact dimensions of the table
+jpeg("/Users/ruiliu/Desktop/research/plots/Box_results_table.jpg", width = table_width, height = table_height, units = "in", res = 300)
+grid.draw(table_grob)  # Draw the table on the graphic device
+dev.off()  # Close the
+
+```
+
+## 2.2 Durbin Watson 
+Null hypothesis for the Durbin-Watson test states that there is no first-order autocorrelation in the residuals.
+```{r}
+if (!require(lmtest)) install.packages("lmtest")
+library(lmtest)
+
+dw_results <- daily_returns %>%
+  group_by(inst) %>%
+  mutate(time_index = row_number()) %>%  # Create a time index for each group
+  do({
+    model <- lm(log_returns ~ time_index, data = .)  # Fit model with a time trend
+    dw_test <- dwtest(model)  # Perform Durbin-Watson test
+    data.frame(inst = unique(.$inst), p_value = dw_test$p.value, dw_statistic = dw_test$statistic)  # Collect results
+  }) %>%
+  ungroup()
+
+dw_results <- dw_results %>%
+  arrange(p_value)
+dw_results
+```
+
+# Fitting AR models 
+
+```{r}
+library(forecast)
+library(tseries)
+library(dplyr)
+
+fit_ar_and_return_details <- function(log_returns) {
+  max_lags <- 10  # Maximum number of lags you want to try
+  final_model <- NULL
+  final_residuals <- NULL
+  final_squared_residuals <- NULL
+  for (p in 1:max_lags) {
+    # Fit AR model of order p
+    fit <- Arima(log_returns, order = c(p, 0, 0))
+    # Calculate residuals
+    residuals <- residuals(fit)
+    # Ljung-Box test on residuals
+    lb_test_normal <- Box.test(residuals, lag = p, type = "Ljung-Box")
+    # Check if p-value is above 0.05
+    if (lb_test_normal$p.value > 0.05) {
+      final_model <- fit
+      final_residuals <- residuals
+      final_squared_residuals <- residuals^2
+      break
+    }
+  }
+
+  # If no model is found to be insignificant, use the last one tried
+  if (is.null(final_model)) {
+    final_model <- fit
+    final_residuals <- residuals(fit)
+    final_squared_residuals <- final_residuals^2
+  }
+  
+  # Ljung-Box test on squared residuals
+  lb_test_squared <- Box.test(final_squared_residuals, lag = final_model$arma[1], type = "Ljung-Box")
+
+  return(list(model = final_model, p_value_residual= lb_test_normal$p.value, p_value_residual_squared = lb_test_squared$p.value, residuals = final_residuals, squared_residuals = final_squared_residuals))
+}
+
+# Apply this function to each 'inst' group in the 'daily_returns' dataset
+AR_results <- daily_returns %>%
+  group_by(inst) %>%
+  summarise(ar_details = list(fit_ar_and_return_details(log_returns)),
+            .groups = 'drop')
+
+# Extract details from the list
+AR_results <- AR_results %>%
+  mutate(
+    ar_order = sapply(ar_details, function(x) x$model$arma[1]),  # AR order
+    p_value_residuals = sapply(ar_details, function(x) x$p_value_residual),  # Ljung-Box p-value for normal residuals
+    p_value_residuals_squared = sapply(ar_details, function(x) x$p_value_residual_squared),  # Ljung-Box p-value for squared residuals
+    residuals = sapply(ar_details, function(x) x$residuals, simplify = FALSE),  # normal residuals
+    squared_residuals = sapply(ar_details, function(x) x$squared_residuals, simplify = FALSE)  # squared residuals
+  )
+```
+
+# Test for independence on the squared residuals
+Null hypothesis: there are no autocorrelations in the series at any of the lags tested.
+
+```{r}
+print(AR_results %>% arrange(p_value_residuals_squared))
+```
+```{r}
+library(dplyr)
+library(gridExtra)
+library(grid)
+
+# Ensure AR_results is a data frame/tibble
+AR_results_selected <- AR_results[, c("inst", "ar_order", "p_value_residuals", "p_value_residuals_squared")]
+# Now, select the columns and proceed with the modifications
+AR_results_selected <- AR_results_selected %>%
+  mutate(
+    p_value_residuals = sprintf("%.2f", p_value_residuals),
+    p_value_residuals_squared = sprintf("%.2f", p_value_residuals_squared)
+  ) %>%
+  arrange(p_value_residuals_squared) %>%  # Sorting as needed
+  rename(
+    asset = inst,
+    `fitted AR order` = ar_order,
+    `p value residuals` = p_value_residuals,
+    `p value squared residuals` = p_value_residuals_squared
+  )
+
+# Convert the selected and formatted data to a table grob
+table_grob <- tableGrob(AR_results_selected, rows = NULL)  # No row names
+
+# Calculate the exact dimensions of the table
+table_width <- convertWidth(sum(table_grob$widths), "in", valueOnly = TRUE)
+table_height <- convertHeight(sum(table_grob$heights), "in", valueOnly = TRUE)
+
+# Save the table as a JPEG image
+jpeg("/Users/ruiliu/Desktop/research/plots/AR_results_table.jpg", width = table_width, height = table_height, units = "in", res = 300)
+grid.draw(table_grob)  # Draw the table on the graphic device
+dev.off() 
+```
+# Fit GARCH model to the residuals from the AR model 
+
+```{r}
+if (!require(rugarch)) install.packages("rugarch")
+library(rugarch)
+
+# Function to fit GARCH model and test residuals
+fit_garch_and_test <- function(residuals) {
+  max_p <- 2  # Max GARCH(p,q) orders
+  max_q <- 2
+  found_significant_model <- FALSE
+
+  for (p in 1:max_p) {
+    for (q in 1:max_q) {
+      spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(p, q)),
+                         mean.model = list(armaOrder = c(0, 0), include.mean = FALSE))
+      garch_fit <- ugarchfit(spec, unlist(residuals), solver = 'hybrid')
+
+      # Extract and square the standardized residuals from the GARCH model
+      garch_std_residuals <- as.numeric(residuals(garch_fit, standardize = TRUE))
+      
+      # Ljung-Box test on squared residuals
+      lb_test <- Box.test(garch_std_residuals^2, lag = max(p, q), type = "Ljung-Box")
+
+      if (lb_test$p.value > 0.05) {
+        return(list(order = c(p, q), lb_p_value = lb_test$p.value, std_residuals = garch_std_residuals))
+      }
+    }
+  }
+
+  # If no model is found with an insignificant p-value, return an indication
+  return(list(order = c(NA, NA), lb_p_value = NA, std_residuals = NULL))
+}
+
+# Applying the function to each group
+AR_results$garch_details <- lapply(AR_results$residuals, fit_garch_and_test)
+
+# Optional: Extract details for easier analysis
+AR_results$garch_order_p <- sapply(AR_results$garch_details, function(x) x$order[1])
+AR_results$garch_order_q <- sapply(AR_results$garch_details, function(x) x$order[2])
+AR_results$garch_lb_p_value <- sapply(AR_results$garch_details, function(x) x$lb_p_value)
+# Create a list of standardized residuals with length 793
+garch_standardized_resid_list <- lapply(AR_results$garch_details, function(x) {
+  x$std_residuals 
+})
+AR_results$garch_standardized_resid = garch_standardized_resid_list
+
+# Assign the list to the dataframe
+
+garch_standardized_resid_df <- do.call(cbind, AR_results$garch_standardized_resid)
+garch_standardized_resid_df <- as.data.frame(garch_standardized_resid_df)
+colnames(garch_standardized_resid_df) = AR_results$inst
+garch_standardized_resid_df['openTime'] = sort(unique(daily_returns$openTime))
+write.csv(garch_standardized_resid_df, "/Users/ruiliu/Desktop/research/data//Resid_df.csv")
+```
+
+```{r}
+AR_results_selected = AR_results[,c('inst', 'garch_order_p', 'garch_order_q', 'garch_lb_p_value')]
+AR_results_selected <- AR_results_selected %>%
+  mutate(
+    garch_lb_p_value = sprintf("%.2f", garch_lb_p_value),
+  ) %>%
+  arrange(garch_lb_p_value) %>%  # Sorting as needed
+  rename(
+    asset = inst,
+    `fitted GARCH p order` = garch_order_p,
+    `fitted GARCH q order` = garch_order_q,
+    `p value GARCH squared residuals` = garch_lb_p_value,
+  )
+
+# Convert the selected and formatted data to a table grob
+table_grob <- tableGrob(AR_results_selected, rows = NULL)  # No row names
+
+# Calculate the exact dimensions of the table
+table_width <- convertWidth(sum(table_grob$widths), "in", valueOnly = TRUE)
+table_height <- convertHeight(sum(table_grob$heights), "in", valueOnly = TRUE)
+
+# Save the table as a JPEG image
+jpeg("/Users/ruiliu/Desktop/research/plots/GARCH_results_table.jpg", width = table_width, height = table_height, units = "in", res = 300)
+grid.draw(table_grob)  # Draw the table on the graphic device
+dev.off() 
+```
+
+
+# Fitting Marginal Distributions 
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+library(MASS)
+library(sn)
+library(fBasics)
+if (!require(VGAM)) install.packages("VGAM")
+library(VGAM)
+if (!require(fitdistrplus)) install.packages("fitdistrplus")
+library(fitdistrplus)
+library(dplyr)
+library(sn)
+fit_distributions <- function(data) {
+  fits <- list()
+  n <- length(data)  # Number of observations
+
+  # Normal Distribution
+  normal_fit <- MASS::fitdistr(data, "normal")
+  fits$normal <- c(AIC = AIC(normal_fit), BIC = BIC(normal_fit), params = normal_fit$estimate)
+
+  # t-Distribution (provide degrees of freedom estimate if needed)
+  t_fit <- fitdistrplus::fitdist(data, "t", start = list(df = 10))
+  fits$t <- c(AIC = t_fit$aic, BIC = t_fit$bic, params = t_fit$estimate)
+  
+  # # Skew-normal distribution
+  sn_fit = selm(X ~ 1, data= data.frame(X = data), family = 'SN')
+  #sn_fit <- sn::selm(data ~ 1, family = sn::SN())
+  logLik_sn <- logLik(sn_fit)
+  k_sn <- length(coef(sn_fit))
+  fits$sn <- c(AIC = 2 * k_sn - 2 * logLik_sn, BIC = log(n) * k_sn - 2 * logLik_sn, params = coef(sn_fit))
+  
+  # st_fit = selm(X ~ 1, data= data.frame(X = data), family = 'ST', param.type = 'DP')
+  # logLik_st <- logLik(st_fit)
+  # k_st <- length(coef(st_fit))
+  # if (!is.null(coef(st_fit))){
+  #   fits$st <- c(AIC = 2 * k_st - 2 * logLik_st, BIC = log(n) * k_st - 2 * logLik_st, params = coef(st_fit))
+  # }
+  
+  logistic_fit <- fitdistr(data, densfun = "logistic")
+  fits$logistic <- c(AIC = AIC(logistic_fit), BIC = BIC(logistic_fit), params = logistic_fit$estimate)
+  
+  dlaplace <- function(x, location, scale) {
+    1/(2 * scale) * exp(-abs(x - location) / scale)
+    }
+  laplace_fit <- fitdistr(data, dlaplace, start = list(location = 0, scale = 1))
+  fits$laplace = c(AIC = AIC(laplace_fit), BIC = BIC(laplace_fit), params = coef(laplace_fit))
+  
+  cauchy_fit = fitdistr(data, "cauchy")
+  fits$cauchy = c(AIC = AIC(cauchy_fit), BIC = BIC(cauchy_fit), params = coef(cauchy_fit))
+  return(fits)
+}
+
+# Apply the function to each row and store the results
+results <- lapply(AR_results$garch_standardized_resid, fit_distributions)
+# Print the resulting dataframe
+#print(results)
+```
+
+```{r}
+find_best_model <- function(model_list) {
+  # Initialize a variable to store the minimum BIC and the best model name
+  min_bic <- Inf
+  best_model <- NULL
+
+  # Loop through each model in the list
+  for (model_name in names(model_list)) {
+    current_bic <- model_list[[model_name]]['BIC']
+    # Check if the current model's BIC is lower than the current minimum
+    if (current_bic < min_bic) {
+      min_bic <- current_bic
+      best_model <- model_name
+    }
+  }
+
+  return(best_model)
+}
+
+# Apply the function to each set of models in the results list
+best_distributions <- lapply(results, find_best_model)
+
+# Print or return the best distribution for each set of results
+best_distributions <- mapply(function(asset, distribution) {
+  c(inst = asset, distribution = distribution)
+}, as.list(AR_results$inst), best_distributions, SIMPLIFY = FALSE)
+
+# Print the combined list
+distribution_names <- sapply(best_distributions, function(x) x["distribution"])
+names(best_distributions) = AR_results$inst
+distribution_counts <- table(distribution_names)
+distribution_counts
+```
+
+```{r}
+# Assuming best_distributions is a list of data frames
+best_distributions_df <- as.data.frame(do.call(rbind, best_distributions))
+
+# Optionally, rename the columns
+colnames(best_distributions_df) <- c("Asset", "Best_Fitting_Distribution")
+
+# Sort by the distribution column
+best_distributions_df <- best_distributions_df[order(best_distributions_df$Best_Fitting_Distribution), ]
+# Convert the sorted data frame to a table grob
+table_grob <- tableGrob(best_distributions_df, rows = NULL)  # No row names
+
+# Calculate the exact dimensions of the table
+table_width <- convertWidth(sum(table_grob$widths), "in", valueOnly = TRUE)
+table_height <- convertHeight(sum(table_grob$heights), "in", valueOnly = TRUE)
+# Save the table as a JPEG image
+jpeg("/Users/ruiliu/Desktop/research/plots/best_distributions_table.jpg", width = table_width, height = table_height, units = "in", res = 300)
+grid.draw(table_grob)  # Draw the table on the graphic device
+dev.off()  # Close the graphics device
+```
+
+```{r}
+plot_data <- list()
+
+for (i in 1:length(best_distributions)) {
+  best <- best_distributions[[i]]
+  model <- results[[i]][[best[['distribution']]]]
+  x <- seq(-5, 5, by = 0.01)
+  
+  if (best[['distribution']] == 'normal') {
+    mean <- model['params.mean']
+    sd <- model['params.sd']  # corrected parameter name
+    plot_data[[i]] <- dnorm(x = x, mean = mean, sd = sd)
+  } else if (best['distribution'] == 't') {
+    df <- model['params.df']
+    plot_data[[i]] <- dt(x = x, df = df)
+  } else if (best['distribution'] == 'sn') {
+    mean <- model['params.mean']
+    sd <- model['params.s.d']
+    gamma1 <- model['params.gamma1']
+    plot_data[[i]] <- dsn(x = x, xi = mean, omega = sd, alpha = gamma1)
+  } else if (best['distribution'] == 'st') {
+    mean <- model['params.mean']
+    sd <- model['params.s.d']
+    gamma1 <- model['params.gamma1']
+    gamma2 <- model['params.gamma2']
+    plot_data[[i]] <- dst(x = x, omega = sd, alpha = gamma1, nu = gamma2)
+  } else if (best['distribution'] == 'logistic') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    plot_data[[i]] <- dlogis(x = x, location = location, scale = scale)
+  } else if (best['distribution'] == 'laplace') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    plot_data[[i]] <- dlaplace(x = x, location = location, scale = scale)
+  } else if (best['distribution'] == 'cauchy') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    plot_data[[i]] <- dcauchy(x = x, location = location, scale = scale)
+  }
+}
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+# Create a list to hold the individual plots
+plot_list <- list()
+
+# Loop through each distribution and generate the plot
+for (i in 1:length(best_distributions)) {
+  
+  # Create histogram data
+  hist_data <- hist(AR_results$garch_standardized_resid[[i]], plot = FALSE, breaks = 100)
+  
+  # Create a data frame for the histogram
+  df_hist <- data.frame(x = hist_data$mids, y = hist_data$density)
+  
+  # Create a data frame for the line plot using the original x and y values
+  df_line <- data.frame(x = x, y = plot_data[[i]])
+  
+  # Generate the plot
+  p <- ggplot() +
+    geom_histogram(aes(x = AR_results$garch_standardized_resid[[i]], y = ..density..), 
+                   bins = 100, fill = "lightgray", color = "black") +
+    geom_line(data = df_line, aes(x = x, y = y), color = "blue", size = 0.5) +
+    labs(title = paste(AR_results$inst[[i]], ": ", best_distributions[[i]]['distribution']),
+         x = "Standardized Residuals",
+         y = "Density") +
+    xlim(-10, 10) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 8),   
+      axis.title.x = element_text(size = 6),                
+      axis.title.y = element_text(size = 6), 
+      axis.text.x = element_text(size = 5),                  # Adjust x-axis label size
+      axis.text.y = element_text(size = 5)               
+    )
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Arrange the plots into a grid of 10 rows by 2 columns
+combined_plot <- marrangeGrob(plot_list, nrow = 10, ncol = 2)
+
+# Save the combined plot as a JPEG file
+jpeg("combined_histograms_and_lines.jpg", width = 8, height = 11, units = "in", res = 300)
+grid.draw(combined_plot)
+dev.off()
+
+jpeg("/Users/ruiliu/Desktop/research/plots/fitted_distributions.jpg", width = 8.27, height = 11.69, units = "in", res = 300)
+grid.draw(combined_plot)
+dev.off()
+```
+
+```{r}
+unif_data <- list()
+
+for (i in 1:length(best_distributions)) {
+  best <- best_distributions[[i]]
+  model <- results[[i]][[best[['distribution']]]]
+  
+  if (best[['distribution']] == 'normal') {
+    mean <- model['params.mean']
+    sd <- model['params.sd']
+    unif_data[[i]] <- pnorm(q = AR_results$garch_standardized_resid[[i]], mean = mean, sd = sd)
+  } else if (best[['distribution']] == 't') {
+    df <- model['params.df']
+    unif_data[[i]] <- pt(q = AR_results$garch_standardized_resid[[i]], df = df)
+  } else if (best[['distribution']] == 'sn') {
+    mean <- model['params.mean']
+    sd <- model['params.s.d']
+    gamma1 <- model['params.gamma1']
+    unif_data[[i]] <- psn(x = AR_results$garch_standardized_resid[[i]], xi = mean, omega = sd, alpha = gamma1)
+  } else if (best[['distribution']] == 'st') {
+    mean <- model['params.mean']
+    sd <- model['params.s.d']
+    gamma1 <- model['params.gamma1']
+    gamma2 <- model['params.gamma2']
+    unif_data[[i]] <- pst(x = AR_results$garch_standardized_resid[[i]], omega = sd, alpha = gamma1, nu = gamma2)
+  } else if (best[['distribution']] == 'logistic') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    unif_data[[i]] <- plogis(q = AR_results$garch_standardized_resid[[i]], location = location, scale = scale)
+  } else if (best[['distribution']] == 'laplace') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    unif_data[[i]] <- plaplace(q = AR_results$garch_standardized_resid[[i]], location = location, scale = scale)
+  } else if (best[['distribution']] == 'cauchy') {
+    location <- model['params.location']
+    scale <- model['params.scale']
+    unif_data[[i]] <- pcauchy(q = AR_results$garch_standardized_resid[[i]], location = location, scale = scale)
+  }
+}
+
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+library(grid)
+
+# Create a list to hold the individual plots
+plot_list <- list()
+
+# Loop through each unif_data set and generate the QQ plot
+for (i in 1:length(unif_data)) {
+  
+  # Generate the theoretical quantiles (uniform distribution)
+  theoretical_quantiles <- qunif(ppoints(length(unif_data[[i]])))
+  
+  # Sort the sample data to match with theoretical quantiles
+  sample_quantiles <- sort(unif_data[[i]])
+  
+  # Create a data frame for ggplot
+  df <- data.frame(theoretical_quantiles = theoretical_quantiles, 
+                   sample_quantiles = sample_quantiles)
+  
+  # Generate the QQ plot
+  p <- ggplot(df, aes(x = theoretical_quantiles, y = sample_quantiles)) +
+    geom_point(color = "grey") +
+    geom_abline(slope = 1, intercept = 0, color = "red") +  # 45-degree line
+    labs(title =  best_distributions[[i]]['inst'], 
+         x = "Theoretical Quantiles (Uniform)", 
+         y = "Sample Quantiles") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 8, face = "bold"),    # Adjust title size and style
+      axis.title.x = element_text(size = 6),              
+      axis.title.y = element_text(size = 6), 
+      axis.text.x = element_text(size = 5),          
+      axis.text.y = element_text(size = 5)     
+    )
+  
+  # Add the plot to the list
+  plot_list[[i]] <- p
+}
+
+# Arrange the plots into a grid of 10 rows by 2 columns
+combined_plot <- marrangeGrob(plot_list, nrow = 10, ncol = 2)
+
+
+# Save the combined plot as a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/combined_qq_plots.jpg", width = 8.27, height = 11.69, units = "in", res = 300)
+grid.draw(combined_plot)
+dev.off()
+
+```
+
+```{r}
+library(psych)
+library(factoextra)
+unif_df = data.frame(do.call(cbind, unif_data))
+colnames(unif_df) = names(best_distributions)
+
+#aa = lapply(AR_results$garch_standardized_resid, qnorm)
+
+cor_mat_unif_df = cor(unif_df[1:20])
+fa_result_new = fa(cor_mat_unif_df, nfactors = min(ncol(unif_df), 8), rotate = "varimax", fm = "principal")
+
+# Filter out negative eigenvalues for visualization
+positive_eigenvalues <- fa_result_new$values[fa_result_new$values > 0]
+
+# Create a vector for the number of factors
+factors <- 1:length(positive_eigenvalues)
+
+# Generate a plot with only positive eigenvalues
+plot(factors, positive_eigenvalues, type = "b", xlab = "Factor Number", ylab = "Eigenvalues", main = "Scree Plot")
+abline(h = 1, col = "red", lty = 2)  # Add a line at eigenvalue = 1
+unif_df['openTime'] = sort(unique(daily_returns$openTime))
+write.csv(unif_df, '/Users/ruiliu/Desktop/research/data/unif_df.csv', row.names = FALSE)
+```

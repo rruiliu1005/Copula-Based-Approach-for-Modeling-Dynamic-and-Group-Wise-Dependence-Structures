@@ -1,0 +1,331 @@
+---
+title: "Fitting_factor_copulas"
+author: "Rui Liu"
+date: "2024-04-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Fitting one and two factor copula
+
+```{r}
+library(stats)
+library(pracma)
+library(FactorCopula)
+library(cubature)
+setwd('/Users/ruiliu/Desktop/research')
+unif_df = read.csv('./data/unif_df.csv')
+#unif_df = unif_df[, 2:length(unif_df)]
+head(unif_df)
+aa = read.csv('./data/unif_df_old.csv')
+#install.packages('FactorCopula')
+head(aa)
+```
+
+
+
+# One factor 
+```{r}
+# Using the function assuming pairs are correctly specified
+start <- Sys.time()
+gaussian_1f <- mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bvn', ncol(unif_df)), gl = gauss.quad.prob(25))
+end <- Sys.time()
+gaussian_1f_time = end - start
+save(gaussian_1f, file = "/Users/ruiliu/Desktop/research/models/Gaussian_1_factor.RData")
+```
+
+```{r}
+par(mfrow = c(1,2))
+plot(simulated_fitted_gaussian[,c(2,6)], main = 'fitted')
+plot(unif_df[,c(2,6)], main = "actual data")
+tmp = simulated_fitted_gaussian[,1]
+tmp1 = simulated_fitted_gaussian[,2]
+
+index1 = (tmp <0.5) & (tmp1 < 0.5)
+
+tmp1 = (tmp1 -0.5)^6
+tmp = (tmp-0.5)^6
+
+tmp1 = tmp1[index1]
+tmp = tmp[index1]
+cor(tmp, tmp1)
+```
+
+
+```{r}
+# Define the bivariate Gaussian copulas function
+#u1 and u2 are numbers
+bivariate_gaussian_copulas <- function(u1, u2, rho) {
+  x1 <- qnorm(u1, mean = 0, sd = 1)
+  x2 <- qnorm(u2, mean = 0, sd = 1)
+  out <- exp(
+    (2*rho*x1*x2 - rho^2*(x1^2+x2^2))/((2*(1-rho^2)))
+  )/sqrt(1-rho^2)
+  #out <- (1-rho^2)^(-1/2) * exp((2*rho*x1*x2 - rho^2*(x1^2 + x2^2))/(2*(1-rho^2)))
+  return(out)
+}
+
+#derivative of the bivariate Gaussian copulas with respect to rho
+deriv_gaussian_rho <- function(u1, u2, rho) {
+  x1 <- qnorm(u1, mean = 0, sd = 1)
+  x2 <- qnorm(u2, mean = 0, sd = 1)
+  tmp1 = bivariate_gaussian_copulas(x1, x2, rho)
+  tmp2 = (rho*(1-rho^2) +  x1*x2*(1+rho^2)  - rho*(x1^2 + x2^2))/(1-rho^2)^2
+  out = tmp1*tmp2
+  return(out)
+}
+
+# Define the joint copulas function
+# u is a d dimensional vector, each element corresponds to each asset. 
+# This is the product inside the integral
+gaussian_joint_copulas <- function(u, rho, v1) {
+  #function inside the integral
+  result <- prod(sapply(1:length(u), function(j) bivariate_gaussian_copulas(u[j], v1, rho[j])))
+  return(result)
+}
+
+#u is a d vector
+#rho is a d dimensional vector
+gaussian_log_likelihood <- function(rho, u) {
+  #integrating over v, number of quadranture points to use for v
+  gl = gaussLegendre(25, 0, 1)
+  nl=gl$x
+  wl=gl$w
+  #applying function to each row 
+  tmp = sapply(nl, function(nv) gaussian_joint_copulas(u = u, rho = rho, v1 = nv))
+  tmp = tmp*wl 
+  log_likelihood = sum(tmp)
+  return(-log_likelihood)
+}
+
+#rho is a dx1 vector, u is a nxd matrix
+#the function returns a dx1 derivative with respect to each theta 
+deriv_gaussian_log_likelihood <- function(rho, u){
+  out = rep(NA, ncol(u))
+  #################################
+  #denominator of the derivative
+  integrand <- function(v1, u) gaussian_joint_copulas(u, rho, v1)
+  # constraint rho to be between -1 and 1
+
+  integral_denom <- sapply(1:nrow(u), function(i) adaptIntegrate(integrand, lowerLimit = 0, upperLimit = 1, u = u[i, ])$integral)
+  
+  
+  #################################
+  #denominator of the derivative
+  gaussian_der_num <- function(u, rho, v1, k) {
+  #function inside the integral
+    ##########################################
+    #compute bivariate_gaussian_copulas for k terms, and then multiply 
+    u_sub = u[-k]
+    u_deriv = u[k]
+    rho_sub = rho[-k]
+    rho_deriv = rho[k]
+    v1_sub = v1[-k]
+    v1_deriv = v1[k]
+    num1 <- prod(sapply(1:length(u_sub), function(j) bivariate_gaussian_copulas(u_sub[j], v1, rho_sub[j])))
+    num2 <- deriv_gaussian_rho(u1 = u_deriv, u2 = v1_deriv, rho = rho_deriv)
+  return(num1*num2)
+  }
+  for (k in 1:ncol(u)){
+    integrand <- function(v1, u) gaussian_der_num(u, rho, v1, k)
+    integral_num <- sapply(1:nrow(u), function(i) adaptIntegrate(integrand, lowerLimit = 0, upperLimit = 1, u = u[i, ])$integral)
+    out[k] = sum(integral_num/log(integral_denom))
+  }
+  #log_likelihood <- sum(log(integral)) 
+  #print(-log_likelihood)
+  return(out)
+}
+```
+
+```{r}
+initial_rho <- rep(0.5, (ncol(unif_df)-1))
+start <- Sys.time()
+gaussian_result <- nlm(f = gaussian_log_likelihood, p = initial_rho, u = as.matrix(unif_df[,1:(ncol(unif_df)-1)]), n = ncol(unif_df[,1:(ncol(unif_df)-1)]), iterlim = 100, steptol = 0.01)
+#gaussian_result <- nlm(f = gaussian_log_likelihood, p = initial_rho, u = as.matrix(unif_df), iterlim = 100, steptol = 0.01, stepmax =50)
+end <- Sys.time()
+gaussian_1f_time = end - start
+print(gaussian_1f_time)
+```
+
+```{r}
+start <- Sys.time()
+frank_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('frk', ncol(unif_df)), gl = gauss.quad.prob(25))
+end <- Sys.time()
+frank_1f_time = end -  start
+save(frank_1f, file = "/Users/ruiliu/Desktop/research/models/Frank_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+gumbel_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('gum', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+gumbel_1f_time = end - start
+save(gumbel_1f, file = "/Users/ruiliu/Desktop/research/models/Gumbel_1_factor.RData")
+```
+
+
+```{r}
+start <- Sys.time()
+rgumbel_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rgum', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rgumble1f_time = end - start
+save(rgumbel_1f, file = "/Users/ruiliu/Desktop/research/models/ReflectedGumble_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+onergumbel_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('1rgum', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+onergumbel_1f_time = end - start
+save(onergumbel_1f, file = "/Users/ruiliu/Desktop/research/models/OneReflectedGumble_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+tworgumbel_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('2rgum', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+tworgumbel_1f_time = end - start
+save(tworgumbel_1f, file = "/Users/ruiliu/Desktop/research/models/TwoReflectedGumble_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+Joe_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('joe', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+Joe_1f_time = end - start
+save(Joe_1f, file = "/Users/ruiliu/Desktop/research/models/Joe_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rJoe_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rjoe', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rJoe_1f_time = end - start
+save(rJoe_1f, file = "/Users/ruiliu/Desktop/research/models/rJoe_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+onerJoe_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('1rjoe', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+onerJoe_1f_time = end - start
+save(onerJoe_1f, file = "/Users/ruiliu/Desktop/research/models/onerJoe_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+tworJoe_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('2rjoe', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+tworJoe_1f_time = end - start
+save(tworJoe_1f, file = "/Users/ruiliu/Desktop/research/models/tworJoe_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+BB1_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bb1', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+BB11f_time = end - start
+save(BB1_1f, file = "/Users/ruiliu/Desktop/research/models/BB1_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rBB1_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rbb1', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rBB11f_time = end - start
+save(rBB1_1f, file = "/Users/ruiliu/Desktop/research/models/rBB1_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+BB7_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bb7', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+BB7_1f_time = end - start
+save(BB7_1f, file = "/Users/ruiliu/Desktop/research/models/BB7_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rBB7_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rbb7', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rBB7_1f_time = end - start
+save(rBB7_1f, file = "/Users/ruiliu/Desktop/research/models/rBB7_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+BB8_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bb8', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+BB8_1f_time = end - start
+save(BB8_1f, file = "/Users/ruiliu/Desktop/research/models/BB8_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rBB8_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rbb8', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rBB8_1f_time = end - start
+save(rBB8_1f, file = "/Users/ruiliu/Desktop/research/models/rBB8_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+BB10_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bb10', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+bb10_1f_time = end - start
+save(BB10_1f, file = "/Users/ruiliu/Desktop/research/models/BB10_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rBB10_1f = mle1factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rbb10', ncol(unif_df)), gl = gauss.quad.prob(35))
+end <- Sys.time()
+rbb10_1f_time = end - start
+save(rBB10_1f, file = "/Users/ruiliu/Desktop/research/models/rBB10_1_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+gaussian_2f <- mle2factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('bvn', ncol(unif_df)), copF2 = rep('bvn', ncol(unif_df)), gl = gauss.quad.prob(25))
+print(gaussian_2f$par)
+print(gaussian_2f$loglik)
+end <- Sys.time()
+rnorm2f_time = end - start
+print(rnorm2f_time)
+save(gaussian_2f, file = "/Users/ruiliu/Desktop/research/models/aussian_2_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+frank_2f = mle2factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('frk', ncol(unif_df)), copF2 = rep('frk', ncol(unif_df)), gl = gauss.quad.prob(15))
+end = Sys.time()
+fran2f_time = end - start
+save(fran2f_time, file = "/Users/ruiliu/Desktop/research/models/Frank_2_factor.RData")
+```
+
+```{r}
+start <- Sys.time()
+rgumbel_2f = mle2factor(continuous = unif_df[,1:(ncol(unif_df)-1)], copF1 = rep('rgum', ncol(unif_df)), copF2 = rep('rgum', ncol(unif_df)), gl = gauss.quad.prob(25))
+print(rgumbel_2f$taus)
+print(rgumbel_2f$loglik)
+end <- Sys.time()
+rgumble2f_time = end - start
+print(rgumble2f_time)
+save(rgumble2f_time, file = "/Users/ruiliu/Desktop/research/models/Reflected_gumble_2_factor.RData")
+```
+
+```{r}
+copula_results_list = c("fitted gaussian 1 factor", "fitted frank 1 factor", "gumbel 1 factor", "rgumbel 1 factor", "one rgumbel 1 factor", 
+                        "two rgumbel 1 factor", "BB1 1 factor", "rBB1 1 factor", "BB7 1 factor", "rBB7 1 factor", "BB8 1 factor", "rBB8 1 factor", "BB10 1 factor", 
+                        "rBB10 1 factor", "Joe 1 factor", "rJoe 1 factor", "1rJoe 1 factor", "2rJoe 1 factor")
+times = c("gaussian_1f_time", "frank_1f_time", gumbel_1f_time, "rgumbel_1f_time", onergumbel_1f_time, tworgumbel_1f_time, "BB1_1f_time", "rBB1_1f_time", BB7_1f_time, 
+          rBB7_1ftime, BB8_1f_time, rBB8_1f_time, bb10_1f_time, rbb10_1f_time, Joe_1f_time, rJoe_1f_time, onerJoe_1f_time, tworJoe_1f_time)
+
+run_time_df = data.frame("copula" =copula_results_list, "run_time" = times)
+run_time_df.to_csv("Copula_run_time.csv")
+```
+
+

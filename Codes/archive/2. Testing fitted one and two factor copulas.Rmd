@@ -1,0 +1,589 @@
+---
+title: "3. Testing fitted one and two factor copulas"
+output: html_document
+date: "2024-05-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(stats)
+library(pracma)
+library(FactorCopula)
+library(dplyr)
+setwd('/Users/ruiliu/Desktop/research')
+unif_df = read.csv('./data/unif_df.csv')
+head(unif_df)
+```
+
+
+```{r}
+load("/Users/ruiliu/Desktop/research/models/Gaussian_1_factor.RData")
+load('/Users/ruiliu/Desktop/research/models/Frank_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/Gumbel_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/ReflectedGumble_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/OneReflectedGumble_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/TwoReflectedGumble_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/BB1_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/rBB1_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/BB7_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/rBB7_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/BB8_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/rBB8_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/BB10_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/rBB10_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/Joe_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/rJoe_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/onerJoe_1_factor.RData')
+load('/Users/ruiliu/Desktop/research/models/tworJoe_1_factor.RData')
+
+#load('/Users/ruiliu/Desktop/research/models.Gaussian_2_factor.RData')
+#load('Frank_2_factor.RData')
+#load('reflected_gumble_2_factor.RData')
+#load('BB1_2_factor.RData')
+
+```
+
+# 1. AIC BIC
+
+```{r}
+library(FactorCopula)
+
+compute_AIC <- function(log_likelihood, num_parameters) {
+  aic <- 2 * num_parameters - 2 * log_likelihood
+  return(aic)
+}
+
+compute_BIC <- function(log_likelihood, num_parameters, num_observations) {
+  bic <- num_parameters * log(num_observations) - 2 * log_likelihood
+  return(bic)
+}
+
+copula_list = c('gaussian_1_factor', 'frank_1_factor', 'rgumbel_1_factor', 'BB1_1_factor')
+AIC = c()
+BIC = c()
+
+AIC[1] = compute_AIC(gaussian_1f$loglik, num_parameters = length(gaussian_1f$cpar$f1))
+AIC[2] = compute_AIC(frank_1f$loglik, num_parameters = length(frank_1f$cpar$f1))
+AIC[3] = compute_AIC(gumbel_1f$loglik, num_parameters = length(gumbel_1f$cpar$f1))
+AIC[4] = compute_AIC(rgumbel_1f$loglik, num_parameters = length(rgumbel_1f$cpar$f1))
+AIC[5] = compute_AIC(onergumbel_1f$loglik, num_parameters = length(onergumbel_1f$cpar$f1))
+AIC[6] = compute_AIC(tworgumbel_1f$loglik, num_parameters = length(tworgumbel_1f$cpar$f1))
+AIC[7] = compute_AIC(BB1_1f$loglik, num_parameters = length(BB1_1f$cpar$f1))
+AIC[8] = compute_AIC(rBB1_1f$loglik, num_parameters = length(rBB1_1f$cpar$f1))
+AIC[9] = compute_AIC(BB7_1f$loglik, num_parameters = length(BB7_1f$cpar$f1))
+AIC[10] = compute_AIC(rBB7_1f$loglik, num_parameters = length(rBB7_1f$cpar$f1))
+AIC[11] = compute_AIC(BB8_1f$loglik, num_parameters = length(BB8_1f$cpar$f1))
+AIC[12] = compute_AIC(rBB8_1f$loglik, num_parameters = length(rBB8_1f$cpar$f1))
+AIC[13] = compute_AIC(BB10_1f$loglik, num_parameters = length(BB10_1f$cpar$f1))
+AIC[14] = compute_AIC(rBB10_1f$loglik, num_parameters = length(rBB10_1f$cpar$f1))
+AIC[15] = compute_AIC(Joe_1f$loglik, num_parameters = length(Joe_1f$cpar$f1))
+AIC[16] = compute_AIC(rJoe_1f$loglik, num_parameters = length(rJoe_1f$cpar$f1))
+AIC[17] = compute_AIC(onerJoe_1f$loglik, num_parameters = length(onerJoe_1f$cpar$f1))
+AIC[18] = compute_AIC(tworJoe_1f$loglik, num_parameters = length(tworJoe_1f$cpar$f1))
+
+
+#AIC[5] = compute_AIC(gaussian_2f$loglik, num_parameters = length(gaussian_2f$cpar$f1) + length(gaussian_2f$cpar$f2))
+#AIC[6] = compute_AIC(frank_2f$loglik, num_parameters = length(frank_2f$cpar$f1) + length(frank_2f$cpar$f2))
+# AIC[7] = compute_AIC(rgumbel_2f$loglik, num_parameters = length(rgumbel_2f$cpar$f1) + length(rgumbel_2f$cpar$f2))
+# AIC[8] = compute_AIC(BB1_2f$loglik, num_parameters = length(BB1_2f$cpar$f1) + length(BB1_2f$cpar$f1))
+
+num_obs = nrow(unif_df) * ncol(unif_df)
+BIC[1] = compute_BIC(gaussian_1f$loglik, num_parameters = length(gaussian_1f$cpar$f1), num_observations = num_obs)
+BIC[2] = compute_BIC(frank_1f$loglik, num_parameters = length(frank_1f$cpar$f1), num_observations = num_obs)
+BIC[3] = compute_BIC(gumbel_1f$loglik, num_parameters = length(gumbel_1f$cpar$f1), num_observations = num_obs)
+BIC[4] = compute_BIC(rgumbel_1f$loglik, num_parameters = length(rgumbel_1f$cpar$f1), num_observations = num_obs)
+BIC[5] = compute_BIC(onergumbel_1f$loglik, num_parameters = length(onergumbel_1f$cpar$f1), num_observations = num_obs)
+BIC[6] = compute_BIC(tworgumbel_1f$loglik, num_parameters = length(tworgumbel_1f$cpar$f1), num_observations = num_obs)
+BIC[7] = compute_BIC(BB1_1f$loglik, num_parameters = length(BB1_1f$cpar$f1), num_observations = num_obs)
+BIC[8] = compute_BIC(rBB1_1f$loglik, num_parameters = length(rBB1_1f$cpar$f1), num_observations = num_obs)
+BIC[9] = compute_BIC(BB7_1f$loglik, num_parameters = length(BB7_1f$cpar$f1), num_observations = num_obs)
+BIC[10] = compute_BIC(rBB7_1f$loglik, num_parameters = length(rBB7_1f$cpar$f1), num_observations = num_obs)
+BIC[11] = compute_BIC(BB8_1f$loglik, num_parameters = length(BB8_1f$cpar$f1), num_observations = num_obs)
+BIC[12] = compute_BIC(rBB8_1f$loglik, num_parameters = length(rBB8_1f$cpar$f1), num_observations = num_obs)
+BIC[13] = compute_BIC(BB10_1f$loglik, num_parameters = length(BB10_1f$cpar$f1), num_observations = num_obs)
+BIC[14] = compute_BIC(rBB10_1f$loglik, num_parameters = length(rBB10_1f$cpar$f1), num_observations = num_obs)
+BIC[15] = compute_BIC(Joe_1f$loglik, num_parameters = length(Joe_1f$cpar$f1), num_observations = num_obs)
+BIC[16] = compute_BIC(rJoe_1f$loglik, num_parameters = length(rJoe_1f$cpar$f1), num_observations = num_obs)
+BIC[17] = compute_BIC(onerJoe_1f$loglik, num_parameters = length(onerJoe_1f$cpar$f1), num_observations = num_obs)
+BIC[18] = compute_BIC(tworJoe_1f$loglik, num_parameters = length(tworJoe_1f$cpar$f1), num_observations = num_obs)
+
+#BIC[5] = compute_BIC(gaussian_2f$loglik, num_parameters = length(gaussian_2f$cpar$f1) + length(gaussian_2f$cpar$f2), num_observations = num_obs)
+#BIC[6] = compute_BIC(frank_2f$loglik, num_parameters = length(frank_2f$cpar$f1) + length(frank_2f$cpar$f2))
+# BIC[7] = compute_BIC(rgumbel_2f$loglik, num_parameters = length(rgumbel_2f$cpar$f1) + length(rgumbel_2f$cpar$f2))
+# BIC[8] = compute_BIC(BB1_2f$loglik, num_parameters = length(BB1_2f$cpar$f1) + length(BB1_2f$cpar$f1))
+
+distributions = c("fitted gaussian 1 factor", "fitted frank 1 factor", "gumbel 1 factor", "rgumbel 1 factor", "one rgumbel 1 factor", 
+                        "two rgumbel 1 factor", "BB1 1 factor", "rBB1 1 factor", "BB7 1 factor", "rBB7 1 factor", "BB8 1 factor", "rBB8 1 factor", "BB10 1 factor", 
+                        "rBB10 1 factor", "Joe 1 factor", "rJoe 1 factor", "1rJoe 1 factor", "2rJoe 1 factor")
+out = data.frame('AIC' = AIC, 'BIC' = BIC)
+rownames(out) = distributions
+out[order(out$BIC), ]
+```
+
+# Normal plots 
+```{r}
+library(GGally)
+unif_norm_df = data.frame(apply(unif_df[,1:(ncol(unif_df))-1], 1:2, qnorm, mean = 0, sd = 1))
+#ggpairs(unif_norm_df[,1:10])
+ggpairs(
+  unif_norm_df[,1:10],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  unif_norm_df[,11:20],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  unif_norm_df[,21:30],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  unif_norm_df[,31:40],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+ggpairs(
+  unif_norm_df[,41:50],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+ggpairs(
+  unif_norm_df[,51:60],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  unif_norm_df[,61:70],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  unif_norm_df[,71:76],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+ggpairs(
+  unif_norm_df,
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+```
+
+```{r}
+spearmans_rho_transform = function(rho_s){
+  rho_c = 2*sin(pi/6*rho_s)
+  return(rho_c)
+}
+correlation_mat_spearman = cor(unif_df[,1:(ncol(unif_df)-1)], method = 'spearman')
+correlation_mat_copula = apply(correlation_mat_spearman, 1:2, spearmans_rho_transform)
+simulated_gaussian = MASS::mvrnorm(n = 1000, mu = rep(0, nrow(correlation_mat_copula)), Sigma = correlation_mat_copula)
+
+ggpairs(
+  simulated_gaussian[,1:10],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  simulated_gaussian[,11:20],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  simulated_gaussian[,21:30],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  simulated_gaussian[,31:40],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+ggpairs(
+  simulated_gaussian[,41:50],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+ggpairs(
+  simulated_gaussian[,51:60],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  simulated_gaussian[,61:70],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+ggpairs(
+  simulated_gaussian[,71:76],
+  upper = list(continuous = wrap("points", size = 0.5)),
+  lower = list(continuous = wrap("points", size = 0.5)))
+
+```
+
+# Tail weighted Measure of Dependence 
+```{r}
+resid_df = read.csv('/Users/ruiliu/Desktop/research/data/Resid_df.csv')
+unif_score = function(coin_column){
+    out = rank(coin_column)
+    out = (out-0.5)/length(out)
+    return(out)
+}
+
+power_func = function(coin, d, p){
+  out = 1 - coin/p
+  out = out^d
+  return(out)
+}
+
+power_tail_dependence = function(df, d, p){
+  coin_columns = colnames(df)
+  #power_func_df = as.data.frame(lapply(df, function(col) lapply(col, power_func, d = d, p = p)))
+  df[df > 0.5] = NA
+  power_func_df = as.data.frame(apply(df,1:2, power_func, d = d, p = p))
+  colnames(power_func_df) = colnames(df)
+  power_tail_dependence_df = data.frame(matrix(NA, nrow = length(coin_columns), ncol = length(coin_columns)))
+  colnames(power_tail_dependence_df) = coin_columns
+  rownames(power_tail_dependence_df) = coin_columns
+ 
+ for (i in 1:length(coin_columns)){
+   #cat(sprintf("Completed %d out of %d iterations\n", i, length(coin_columns)))
+   for (j in 1:length(coin_columns)){
+     tmp1 = power_func_df[, coin_columns[i]]
+     tmp2 = power_func_df[, coin_columns[j]]
+     
+     na_positions <- is.na(tmp1) | is.na(tmp2)
+     tmp1 <- tmp1[!na_positions]
+     tmp2 <- tmp2[!na_positions]
+     power_tail_dependence_df[coin_columns[i], coin_columns[j]] = cor(tmp1, tmp2)
+   }
+ }
+ return(power_tail_dependence_df)
+}
+
+
+
+# unif_score_df_garch_resid  = sapply(resid_df[, 1:(ncol(resid_df)-1)], unif_score)
+# lower_tail_dependence_data = power_tail_dependence(df = unif_score_df_garch_resid, p = 0.5, d = 6)
+# upper_tail_dependence_data = power_tail_dependence(df = (1-unif_score_df_garch_resid), p = 0.5, d = 6)
+############################################################################################################
+lower_tail_dependence_data1 = power_tail_dependence(df = unif_df[,1:(ncol(unif_df)-1)], p = 0.5, d = 6)
+upper_tail_dependence_data1 = power_tail_dependence(df = 1-unif_df[,1:(ncol(unif_df)-1)], p = 0.5, d = 6)
+############################################################################################################
+cdf_simulated_gaussian = apply(simulated_gaussian, 1:2, pnorm)
+lower_tail_dependence_gaussian = power_tail_dependence(df = cdf_simulated_gaussian, p = 0.5, d = 6)
+upper_tail_dependence_gaussian = power_tail_dependence(df = 1-cdf_simulated_gaussian, p = 0.5, d = 6)
+```
+
+# Generate data using fitted Copula and compute tail dependence 
+
+$$L(u_1,...,u_d; \theta) = \prod_{i=1}^n{\int_0^1{\prod _{j=1}^{d}c_{j,v_1}(u_{ij}, v_1;\theta_j)dv_1}} $$
+
+
+```{r, tail weighted measure of dependence}
+library(FactorCopula)
+simulated_fitted_gaussian = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = gaussian_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('bvn', (ncol(unif_df) -1)))
+colnames(simulated_fitted_gaussian) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+upper_tail_dependence_fitted_gaussian = power_tail_dependence(df = simulated_fitted_gaussian, p = 0.5, d = 6)
+
+simulated_fitted_frank = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = frank_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('frk', (ncol(unif_df) -1)))
+colnames(simulated_fitted_frank) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_frank = power_tail_dependence(df = simulated_fitted_frank, p = 0.5, d = 6)
+upper_tail_dependence_fitted_frank = power_tail_dependence(df = simulated_fitted_frank, p = 0.5, d = 6)
+
+simulated_fitted_gumbel = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = gumbel_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('gum', (ncol(unif_df) -1)))
+colnames(simulated_fitted_gumbel) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_gumbel = power_tail_dependence(df = simulated_fitted_gumbel, p = 0.5, d = 6)
+
+simulated_fitted_rgumbel = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rgumbel_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rgum', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rgumbel) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rgumbel = power_tail_dependence(df = simulated_fitted_rgumbel, p = 0.5, d = 6)
+
+simulated_fitted_onergumbel = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = onergumbel_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('1rgum', (ncol(unif_df) -1)))
+colnames(simulated_fitted_onergumbel) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_onergumbel = power_tail_dependence(df = simulated_fitted_onergumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_onergumbel = power_tail_dependence(df = simulated_fitted_onergumbel, p = 0.5, d = 6)
+
+simulated_fitted_tworgumbel = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = tworgumbel_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('2rgum', (ncol(unif_df) -1)))
+colnames(simulated_fitted_tworgumbel) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_tworgumbel = power_tail_dependence(df = simulated_fitted_tworgumbel, p = 0.5, d = 6)
+upper_tail_dependence_fitted_tworgumbel = power_tail_dependence(df = simulated_fitted_tworgumbel, p = 0.5, d = 6)
+
+
+simulated_fitted_BB1 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = BB1_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('bb1', (ncol(unif_df) -1)))
+colnames(simulated_fitted_BB1) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_BB1 = power_tail_dependence(df = simulated_fitted_BB1, p = 0.5, d = 6)
+upper_tail_dependence_fitted_BB1 = power_tail_dependence(df = simulated_fitted_BB1, p = 0.5, d = 6)
+
+simulated_fitted_rBB1 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rBB1_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rbb1', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rBB1) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rBB1 = power_tail_dependence(df = simulated_fitted_rBB1, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rBB1 = power_tail_dependence(df = simulated_fitted_rBB1, p = 0.5, d = 6)
+
+simulated_fitted_BB7 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = BB7_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('bb7', (ncol(unif_df) -1)))
+colnames(simulated_fitted_BB7) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_BB7 = power_tail_dependence(df = simulated_fitted_BB7, p = 0.5, d = 6)
+upper_tail_dependence_fitted_BB7 = power_tail_dependence(df = simulated_fitted_BB7, p = 0.5, d = 6)
+
+simulated_fitted_rBB7 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rBB7_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rbb7', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rBB7) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rBB7 = power_tail_dependence(df = simulated_fitted_rBB7, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rBB7 = power_tail_dependence(df = simulated_fitted_rBB7, p = 0.5, d = 6)
+
+simulated_fitted_BB8 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = BB8_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('bb8', (ncol(unif_df) -1)))
+colnames(simulated_fitted_BB8) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_BB8 = power_tail_dependence(df = simulated_fitted_BB8, p = 0.5, d = 6)
+upper_tail_dependence_fitted_BB8 = power_tail_dependence(df = simulated_fitted_BB8, p = 0.5, d = 6)
+
+simulated_fitted_rBB8 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rBB8_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rbb8', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rBB8) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rBB8 = power_tail_dependence(df = simulated_fitted_rBB8, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rBB8 = power_tail_dependence(df = simulated_fitted_rBB8, p = 0.5, d = 6)
+
+simulated_fitted_BB10 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = BB10_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('bb10', (ncol(unif_df) -1)))
+colnames(simulated_fitted_BB10) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_BB10 = power_tail_dependence(df = simulated_fitted_BB10, p = 0.5, d = 6)
+upper_tail_dependence_fitted_BB10 = power_tail_dependence(df = simulated_fitted_BB10, p = 0.5, d = 6)
+
+simulated_fitted_rBB10 = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rBB10_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rbb10', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rBB10) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rBB10 = power_tail_dependence(df = simulated_fitted_rBB10, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rBB10 = power_tail_dependence(df = simulated_fitted_rBB10, p = 0.5, d = 6)
+
+simulated_fitted_Joe = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = Joe_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('joe', (ncol(unif_df) -1)))
+colnames(simulated_fitted_Joe) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_Joe = power_tail_dependence(df = simulated_fitted_Joe, p = 0.5, d = 6)
+upper_tail_dependence_fitted_Joe = power_tail_dependence(df = simulated_fitted_Joe, p = 0.5, d = 6)
+
+simulated_fitted_rJoe = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = rJoe_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('rjoe', (ncol(unif_df) -1)))
+colnames(simulated_fitted_rJoe) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_rJoe = power_tail_dependence(df = simulated_fitted_rJoe, p = 0.5, d = 6)
+upper_tail_dependence_fitted_rJoe = power_tail_dependence(df = simulated_fitted_rJoe, p = 0.5, d = 6)
+
+
+simulated_fitted_onerJoe = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = onerJoe_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('1rjoe', (ncol(unif_df) -1)))
+colnames(simulated_fitted_onerJoe) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_onerJoe = power_tail_dependence(df = simulated_fitted_onerJoe, p = 0.5, d = 6)
+upper_tail_dependence_fitted_onerJoe = power_tail_dependence(df = simulated_fitted_onerJoe, p = 0.5, d = 6)
+
+
+simulated_fitted_tworJoe = r1factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), theta = tworJoe_1f$cpar$f1[1:(ncol(unif_df)-1)], copF1 = rep('1rjoe', (ncol(unif_df) -1)))
+colnames(simulated_fitted_tworJoe) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+lower_tail_dependence_fitted_tworJoe = power_tail_dependence(df = simulated_fitted_tworJoe, p = 0.5, d = 6)
+upper_tail_dependence_fitted_tworJoe = power_tail_dependence(df = simulated_fitted_tworJoe, p = 0.5, d = 6)
+
+# simulated_fitted_gaussian2 = r2factor(n = nrow(unif_df),  d1 = (ncol(unif_df)-1), d2 = (ncol(unif_df)-1), 
+#                                       theta = gaussian_2f$cpar$f1[1:(ncol(unif_df)-1)], delta = gaussian_2f$cpar$f2[1:(ncol(unif_df)-1)], 
+#                                       copF1 = rep('bvn', (ncol(unif_df) -1)), copF2 = rep('bvn', (ncol(unif_df) -1)))
+# colnames(simulated_fitted_gaussian2) = colnames(unif_df)[1:(ncol(unif_df)-1)]
+# lower_tail_dependence_fitted_gaussian2 = power_tail_dependence(df = simulated_fitted_gaussian2, p = 0.3, d = 6)
+# upper_tail_dependence_fitted_gaussian2 = power_tail_dependence(df = simulated_fitted_gaussian2, p = 0.3, d = 6)
+# print("sum of squared difference between the lower tail weighted dependence of simulated gaussian 1 factor model and the data: ")
+# tmp = (lower_tail_dependence_data1 - lower_tail_dependence_gaussian)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the upper tail weighted dependence of simulated gaussian 1 factor model and the data: ")
+# tmp = (upper_tail_dependence_data1 - upper_tail_dependence_gaussian)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the lower tail weighted dependence of fitted gaussian 1 factor model and the data: ")
+# tmp = (lower_tail_dependence_data1 - lower_tail_dependence_fitted_gaussian)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the upper tail weighted dependence of fitted gaussian 1 factor model and the data: ")
+# tmp = (upper_tail_dependence_data1 - upper_tail_dependence_fitted_gaussian)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the lower tail weighted dependence of fitted frank 1 factor model and the data: ")
+# tmp = (lower_tail_dependence_data1 - lower_tail_dependence_fitted_frank)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the upper tail weighted dependence of fitted frank 1 factor model and the data: ")
+# tmp = (upper_tail_dependence_data1 - upper_tail_dependence_fitted_frank)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the lower tail weighted dependence of fitted rgumbel 1 factor model and the data: ")
+# tmp = (lower_tail_dependence_data1 - lower_tail_dependence_fitted_rgumbel)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the upper tail weighted dependence of fitted rgumbel 1 factor model and the data: ")
+# tmp = (upper_tail_dependence_data1 - upper_tail_dependence_fitted_rgumbel)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the lower tail weighted dependence of fitted BB1 1 factor model and the data: ")
+# tmp = (lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB1)^2
+# print(sum(tmp))
+# 
+# print("sum of squared difference between the upper tail weighted dependence of fitted BB1 1 factor model and the data: ")
+# tmp = (upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB1)^2
+# print(sum(tmp))
+```
+
+```{r}
+spearmans_fitted_data = cor(unif_df[,1:(ncol(unif_df)-1)], method = 'spearman')
+spearmans_simulated_gaussian= cor(simulated_gaussian, method = 'spearman')
+spearmans_fitted_gaussian = cor(simulated_fitted_gaussian, method = 'spearman')
+spearmans_fitted_frank = cor(simulated_fitted_frank, method = 'spearman')
+spearmans_fitted_gumbel = cor(simulated_fitted_gumbel, method = 'spearman')
+spearmans_fitted_rgumbel = cor(simulated_fitted_rgumbel, method = 'spearman')
+spearmans_fitted_onergumbel = cor(simulated_fitted_onergumbel, method = 'spearman')
+spearmans_fitted_tworgumbel = cor(simulated_fitted_tworgumbel, method = 'spearman')
+spearmans_fitted_bb1 = cor(simulated_fitted_BB1, method = 'spearman')
+spearmans_fitted_rbb1 = cor(simulated_fitted_rBB1, method = 'spearman')
+spearmans_fitted_bb7 = cor(simulated_fitted_BB7, method = 'spearman')
+spearmans_fitted_rbb7 = cor(simulated_fitted_rBB7, method = 'spearman')
+spearmans_fitted_bb8 = cor(simulated_fitted_BB8, method = 'spearman')
+spearmans_fitted_rbb8 = cor(simulated_fitted_rBB8, method = 'spearman')
+spearmans_fitted_bb10 = cor(simulated_fitted_BB10, method = 'spearman')
+spearmans_fitted_rbb10 = cor(simulated_fitted_rBB10, method = 'spearman')
+spearmans_fitted_Joe = cor(simulated_fitted_Joe, method = 'spearman')
+spearmans_fitted_rJoe = cor(simulated_fitted_rJoe, method = 'spearman')
+spearmans_fitted_onerJoe = cor(simulated_fitted_onerJoe, method = 'spearman')
+spearmans_fitted_tworJoe = cor(simulated_fitted_tworJoe, method = 'spearman')
+
+```
+
+```{r} 
+diff_spearman_mean= c(mean(abs(unlist(spearmans_fitted_data - spearmans_simulated_gaussian))), 
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_gaussian))), 
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_frank))), 
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_gumbel))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rgumbel))), 
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_onergumbel))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_tworgumbel))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb1))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb1))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb7))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb7))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb8))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb8))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb10))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb10))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_Joe))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_rJoe))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_onerJoe))),
+                          mean(abs(unlist(spearmans_fitted_data - spearmans_fitted_tworJoe)))
+                      )
+
+diff_spearman_max= c(max(abs(unlist(spearmans_fitted_data - spearmans_simulated_gaussian))), 
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_gaussian))), 
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_frank))), 
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_gumbel))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_rgumbel))), 
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_onergumbel))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_tworgumbel))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb1))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb1))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb7))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb7))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb8))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb8))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_bb10))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_rbb10))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_Joe))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_rJoe))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_onerJoe))),
+                          max(abs(unlist(spearmans_fitted_data - spearmans_fitted_tworJoe)))
+                      )
+
+
+diff_upper_dependence_mean = c(mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_gaussian))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_gaussian))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_frank))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_gumbel))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rgumbel))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_onergumbel))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_tworgumbel))), 
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB1))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB1))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB7))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB7))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB8))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB8))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB10))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB10))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_Joe))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rJoe))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_onerJoe))),
+                          mean(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_tworJoe)))
+                          )
+
+diff_upper_dependence_max = c(max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_gaussian))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_gaussian))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_frank))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_gumbel))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rgumbel))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_onergumbel))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_tworgumbel))), 
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB1))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB1))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB7))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB7))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB8))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB8))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_BB10))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rBB10))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_Joe))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_rJoe))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_onerJoe))),
+                          max(abs(unlist(upper_tail_dependence_data1 - upper_tail_dependence_fitted_tworJoe)))
+                          )
+
+diff_lower_dependence_mean = c(mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_gaussian))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_gaussian))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_frank))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_gumbel))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rgumbel))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_onergumbel))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_tworgumbel))), 
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB1))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB1))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB7))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB7))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB8))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB8))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB10))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB10))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_Joe))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rJoe))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_onerJoe))),
+                          mean(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_tworJoe)))
+                          )
+
+diff_lower_dependence_max = c(max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_gaussian))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_gaussian))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_frank))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_gumbel))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rgumbel))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_onergumbel))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_tworgumbel))), 
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB1))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB1))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB7))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB7))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB8))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB8))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_BB10))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rBB10))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_Joe))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_rJoe))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_onerJoe))),
+                          max(abs(unlist(lower_tail_dependence_data1 - lower_tail_dependence_fitted_tworJoe)))
+                          )
+copula_results_list = c("simulated gaussian", "fitted gaussian 1 factor", "fitted frank 1 factor", "gumbel 1 factor", "rgumbel 1 factor", "one rgumbel 1 factor", 
+                        "two rgumbel 1 factor", "BB1 1 factor", "rBB1 1 factor", "BB7 1 factor", "rBB7 1 factor", "BB8 1 factor", "rBB8 1 factor", "BB10 1 factor", 
+                        "rBB10 1 factor", "Joe 1 factor", "rJoe 1 factor", "1rJoe 1 factor", "2rJoe 1 factor")
+dependence_measure_results = data.frame('S_mean' = diff_spearman_mean)
+dependence_measure_results['S_max'] =  diff_spearman_max
+dependence_measure_results['tail_upper_mean'] =  diff_upper_dependence_mean
+dependence_measure_results['tail_upper_max'] =  diff_upper_dependence_max
+dependence_measure_results['tail_lower_mean'] =  diff_lower_dependence_mean
+dependence_measure_results['tail_lower_max'] =  diff_lower_dependence_max
+dependence_measure_results['log_likelihood'] =  c(NA, gaussian_1f$loglik, frank_1f$loglik, gumbel_1f$loglik, rgumbel_1f$loglik, onergumbel_1f$loglik, 
+                                                  tworgumbel_1f$loglik, BB1_1f$loglik, rBB1_1f$loglik, BB7_1f$loglik, rBB7_1f$loglik, BB8_1f$loglik, rBB8_1f$loglik, 
+                                                  BB10_1f$loglik, rBB10_1f$loglik, Joe_1f$loglik, rJoe_1f$loglik, onerJoe_1f$loglik, tworJoe_1f$loglik)
+rownames(dependence_measure_results) = copula_results_list
+dependence_measure_results %>%
+  mutate(across(where(is.numeric), ~round(., digits =3)))
+```
+# Construct portfolio
+
+

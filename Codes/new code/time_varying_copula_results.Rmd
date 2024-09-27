@@ -1,0 +1,852 @@
+---
+title: "time_varying_copula_results"
+output: html_document
+date: "2024-09-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+df = read.csv('/Users/ruiliu/Desktop/research/data/unif_df.csv')
+head(df)
+```
+
+```{r}
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_720_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_360_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_clayton_720_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_90_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_180_days.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_360_days.RData")
+# load("/Users/ruiliu/Desktop/research/results/result_gumbel_720_days.RData")
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, abs(matrix_data[, i]), type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 2/pi*asin(matrix_data)
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_clayton_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_clayton_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- matrix_data/(matrix_data+2)
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_90_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_180_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_360_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_720_days.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_90_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_90_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_180_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_360_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_720_days_tau.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_720_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+matrix_data <- 1 - 1/matrix_data
+
+# Loop through each series and plot
+dates = as.Date(df[721:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+# BIC
+
+```{r}
+compute_BIC <- function(log_likelihood, num_params, num_obs) {
+  BIC <- - log_likelihood/num_obs #+ num_params * log(num_obs)
+  return(BIC)
+}
+```
+
+
+```{r}
+gaussian_90_days_BIC = unlist(lapply(result_gaussian_90_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 90))
+gaussian_90_days_avg_BIC = mean(gaussian_90_days_BIC)
+
+gaussian_180_days_BIC = unlist(lapply(result_gaussian_180_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gaussian_180_days_avg_BIC = mean(gaussian_180_days_BIC)
+
+gaussian_360_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 360))
+gaussian_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+gaussian_720_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gaussian_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+print(cat("mean BIC for 90 days rolling window: ", gaussian_90_days_avg_BIC))
+print(cat("mean BIC for 180 days rolling window: ", gaussian_180_days_avg_BIC))
+print(cat("mean BIC for 360 days rolling window: ", gaussian_360_days_avg_BIC))
+
+# Convert dates for the different BIC series
+dates_90 <- as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+dates_180 <- as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+dates_360 <- as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+
+# Define the limits for x and y axes
+x_limits <- range(dates_90, dates_180, dates_360)  # Set the x limits to cover all dates
+y_limits <- range(gaussian_90_days_BIC, gaussian_180_days_BIC, gaussian_360_days_BIC)  # Set y limits based on the BIC values
+
+# Plot the 90-day rolling window BIC with custom x and y limits
+plot(dates_90, gaussian_90_days_BIC, type = "l", col = "blue", lwd = 2, 
+     main = "BIC Comparison for Rolling Windows", 
+     xlab = "Time", ylab = "BIC", xlim = x_limits, ylim = y_limits)
+
+# Add the 180-day rolling window BIC as a line
+lines(dates_180, gaussian_180_days_BIC, type = "l", col = "red", lwd = 2)
+
+# Add the 360-day rolling window BIC as a line
+lines(dates_360, gaussian_360_days_BIC, type = "l", col = "green", lwd = 2)
+
+# Add a legend to distinguish the different lines
+legend("topright", legend = c("90 days", "180 days", "360 days"), 
+       col = c("blue", "red", "green"), lty = 1, lwd = 2, 
+       cex = 0.3) 
+```
+
+
+```{r}
+gumbel_90_days_BIC = unlist(lapply(result_gumbel_90_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 90))
+gumbel_90_days_avg_BIC = mean(gumbel_90_days_BIC)
+
+gumbel_180_days_BIC = unlist(lapply(result_gumbel_180_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gumbel_180_days_avg_BIC = mean(gumbel_90_days_BIC)
+
+gumbel_360_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 360))
+gumbel_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+print(cat("mean BIC for 90 days rolling window: ", gumbel_90_days_avg_BIC))
+print(cat("mean BIC for 180 days rolling window: ", gumbel_180_days_avg_BIC))
+print(cat("mean BIC for 360 days rolling window: ", gumbel_360_days_avg_BIC))
+
+# Convert dates for the different BIC series
+dates_90 <- as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+dates_180 <- as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+dates_360 <- as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+
+# Define the limits for x and y axes
+x_limits <- range(dates_90, dates_180, dates_360)  # Set the x limits to cover all dates
+y_limits <- range(gumbel_90_days_BIC, gumbel_180_days_BIC, gumbel_360_days_BIC)  # Set y limits based on the BIC values
+
+# Plot the 90-day rolling window BIC with custom x and y limits
+plot(dates_90, gumbel_90_days_BIC, type = "l", col = "blue", lwd = 2,
+     main = "BIC Comparison for Rolling Windows", 
+     xlab = "Time", ylab = "BIC", xlim = x_limits, ylim = y_limits)
+
+# Add the 180-day rolling window BIC as a line
+lines(dates_180, gumbel_180_days_BIC, type = "l", col = "red", lwd = 2)
+
+# Add the 360-day rolling window BIC as a line
+lines(dates_360, gumbel_360_days_BIC, type = "l", col = "green", lwd = 2)
+
+# Add a legend to distinguish the different lines
+legend("topright", legend = c("90 days", "180 days", "360 days"), 
+       col = c("blue", "red", "green"), lty = 1, lwd = 2, 
+       cex = 0.3) 
+```
+
+
+
+
+#package results 
+
+```{r}
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_90_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_180_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gaussian_360_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_90_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_180_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_gumbel_360_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_bb1_90_days_package.RData")
+load("/Users/ruiliu/Desktop/research/results/result_bb1_180_days_package.RData")
+```
+
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_90_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_90_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_180_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_180_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gaussian_360_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gaussian_360_days[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_90_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_90_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_180_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_180_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_gumbel_360_days_package.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_gumbel_360_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_bb1_90_days_package_theta1.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_bb1_90_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, 2*i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_bb1_90_days_package_theta2.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_bb1_90_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, 2*i-1], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_bb1_180_days_package_theta1.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_bb1_180_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, 2*i], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+```{r}
+# Save the plot as a 4x5 grid to a JPEG file
+jpeg("/Users/ruiliu/Desktop/research/plots/result_bb1_90_days_package_theta2.jpeg", width = 8, height = 10, units = "in", res = 300)
+# Set up the plotting layout
+par(mfrow = c(5, 4)) 
+# Plot the data from the second element of result_gaussian_180_days
+second_element <- result_bb1_90_days_package[[2]]
+matrix_data <- do.call(rbind, second_element)
+
+# Loop through each series and plot
+dates = as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+for (i in 1:20) {
+  plot(dates, matrix_data[, 2*i-1], type = "l", main = colnames(df)[i], xlab = "Time", ylab = "Value")
+}
+# Close the JPEG device to save the file
+dev.off()
+```
+
+
+
+
+# BIC
+
+```{r}
+compute_BIC <- function(log_likelihood, num_params, num_obs) {
+  BIC <- - log_likelihood/num_obs #+ num_params * log(num_obs)
+  return(BIC)
+}
+```
+
+
+```{r}
+gaussian_90_days_BIC = unlist(lapply(result_gaussian_90_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 90))
+gaussian_90_days_avg_BIC = mean(gaussian_90_days_BIC)
+
+gaussian_180_days_BIC = unlist(lapply(result_gaussian_180_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gaussian_180_days_avg_BIC = mean(gaussian_180_days_BIC)
+
+gaussian_360_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 360))
+gaussian_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+gaussian_720_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gaussian_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+print(cat("mean BIC for 90 days rolling window: ", gaussian_90_days_avg_BIC))
+print(cat("mean BIC for 180 days rolling window: ", gaussian_180_days_avg_BIC))
+print(cat("mean BIC for 360 days rolling window: ", gaussian_360_days_avg_BIC))
+
+# Convert dates for the different BIC series
+dates_90 <- as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+dates_180 <- as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+dates_360 <- as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+
+# Define the limits for x and y axes
+x_limits <- range(dates_90, dates_180, dates_360)  # Set the x limits to cover all dates
+y_limits <- range(gaussian_90_days_BIC, gaussian_180_days_BIC, gaussian_360_days_BIC)  # Set y limits based on the BIC values
+
+# Plot the 90-day rolling window BIC with custom x and y limits
+plot(dates_90, gaussian_90_days_BIC, type = "l", col = "blue", lwd = 2, 
+     main = "BIC Comparison for Rolling Windows", 
+     xlab = "Time", ylab = "BIC", xlim = x_limits, ylim = y_limits)
+
+# Add the 180-day rolling window BIC as a line
+lines(dates_180, gaussian_180_days_BIC, type = "l", col = "red", lwd = 2)
+
+# Add the 360-day rolling window BIC as a line
+lines(dates_360, gaussian_360_days_BIC, type = "l", col = "green", lwd = 2)
+
+# Add a legend to distinguish the different lines
+legend("topright", legend = c("90 days", "180 days", "360 days"), 
+       col = c("blue", "red", "green"), lty = 1, lwd = 2, 
+       cex = 0.3) 
+```
+
+
+```{r}
+gumbel_90_days_BIC = unlist(lapply(result_gumbel_90_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 90))
+gumbel_90_days_avg_BIC = mean(gumbel_90_days_BIC)
+
+gumbel_180_days_BIC = unlist(lapply(result_gumbel_180_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 180))
+gumbel_180_days_avg_BIC = mean(gumbel_90_days_BIC)
+
+gumbel_360_days_BIC = unlist(lapply(result_gaussian_360_days_package[[1]], FUN = compute_BIC, num_params = 20, num_obs = 360))
+gumbel_360_days_avg_BIC = mean(gaussian_360_days_BIC)
+
+print(cat("mean BIC for 90 days rolling window: ", gumbel_90_days_avg_BIC))
+print(cat("mean BIC for 180 days rolling window: ", gumbel_180_days_avg_BIC))
+print(cat("mean BIC for 360 days rolling window: ", gumbel_360_days_avg_BIC))
+
+# Convert dates for the different BIC series
+dates_90 <- as.Date(df[91:nrow(df), 21], format = "%Y-%m-%d")
+dates_180 <- as.Date(df[181:nrow(df), 21], format = "%Y-%m-%d")
+dates_360 <- as.Date(df[361:nrow(df), 21], format = "%Y-%m-%d")
+
+# Define the limits for x and y axes
+x_limits <- range(dates_90, dates_180, dates_360)  # Set the x limits to cover all dates
+y_limits <- range(gumbel_90_days_BIC, gumbel_180_days_BIC, gumbel_360_days_BIC)  # Set y limits based on the BIC values
+
+# Plot the 90-day rolling window BIC with custom x and y limits
+plot(dates_90, gumbel_90_days_BIC, type = "l", col = "blue", lwd = 2,
+     main = "BIC Comparison for Rolling Windows", 
+     xlab = "Time", ylab = "BIC", xlim = x_limits, ylim = y_limits)
+
+# Add the 180-day rolling window BIC as a line
+lines(dates_180, gumbel_180_days_BIC, type = "l", col = "red", lwd = 2)
+
+# Add the 360-day rolling window BIC as a line
+lines(dates_360, gumbel_360_days_BIC, type = "l", col = "green", lwd = 2)
+
+# Add a legend to distinguish the different lines
+legend("topright", legend = c("90 days", "180 days", "360 days"), 
+       col = c("blue", "red", "green"), lty = 1, lwd = 2, 
+       cex = 0.3) 
+```
+
+
