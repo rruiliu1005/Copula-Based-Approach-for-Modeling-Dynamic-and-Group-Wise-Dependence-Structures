@@ -1,36 +1,17 @@
----
-title: "Fitting one factor copula_fast_code"
-output: html_document
-date: "2024-07-14"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-
-```{r}
 library(stats)
 library(pracma)
 library(FactorCopula)
 library(cubature)
 library(copula)
 library(matrixStats)
-setwd('/Users/ruiliu/Desktop/research')
-df = read.csv('./data/unif_df.csv')
-unif_df = df[, 1:20]
-head(unif_df)
-```
-# 1. Gaussian 
-```{r}
+
 gaussian_derivative_single_obs = function(u1, rho, nl_x2, wl){
   rho_squared = rho^2
   one_minus_rho_squared = 1 - rho_squared
   u1 = as.numeric(u1)
   x1 = qnorm(u1, mean = 0, sd = 1)
   x2 = matrix(rep(nl_x2, 20), ncol = 35, nrow = 20, byrow = TRUE)
-  
+
   numerator = 2 * rho * x1 * x2 - rho_squared * (x1^2 + x2^2)
   denominator = 2 * one_minus_rho_squared
   exponent = numerator / denominator
@@ -79,48 +60,8 @@ fit_gaussian_copula = function(unif_df, rho, n_nodes){
   result_test = nlm(f = neg_log_gaussian_likelihood, p = rho, unif_df = unif_df, nl_x2 = nl_x2, wl = wl, gradtol = 1e-5, steptol = 1e-10, iterlim = 1000, hessian = FALSE, check.analyticals = FALSE)
   return(result_test)
 }
-```
 
-```{r}
-package_runtime = c()
-my_code_runtime = c()
-models = c()
-log_likelihood_package = c()
-log_likelihood_mycode = c()
-####################################################################################
-start = Sys.time()
-test_1f = mle1factor(continuous = unif_df, copF1 = rep('bvn', ncol(unif_df)), gl = gauss.quad.prob(35), hessian = TRUE)
-print(as.numeric(test_1f$cpar$f1))
-print(test_1f$loglik)
 
-end = Sys.time()
-package_runtime = c(package_runtime, as.numeric(difftime(end, start, units = "secs")))
-print("The packaged used: ")
-print(end - start)
-gl = gaussLegendre(35, 0 ,1)
-nodes = gl$x
-weights = gl$w
-log_likelihood_package = c(log_likelihood_package, -neg_log_gaussian_likelihood(unif_df, unlist(test_1f$cpar$f1), qnorm(nodes), weights)[1])
-####################################################################################
-#test the log likelihood function and the derivative function
-# test_func = neg_log_gaussian_likelihood(unif_df_test, rho = as.numeric(test_1f$cpar$f1))
-# print(test_func)
-####################################################################################
-start = Sys.time()
-n_nodes = 35
-gaussian_1f_whole_data = fit_gaussian_copula(unif_df, rep(0.5, 20), n_nodes)
-end = Sys.time()
-print(end - start)
-my_code_runtime = c(my_code_runtime, as.numeric(difftime(end, start, units = "secs")))
-models = c(models, "Gaussian")
-log_likelihood_mycode = c(log_likelihood_mycode, -gaussian_1f_whole_data$minimum)
-save(gaussian_1f_whole_data, file = "/Users/ruiliu/Desktop/research/results/gaussian_1f_whole_data.RData")
-
-```
-
-# 2. Clayton 
-
-```{r}
 clayton_single_obs_pre = function(u1, u2, theta, d) {
   u1_theta = u1^(-theta)
   u2_theta = u2^(-theta)
@@ -131,21 +72,21 @@ clayton_single_obs_pre = function(u1, u2, theta, d) {
   A = (theta + 1)
   B = g_theta^(-2 - 1 / theta)
   C = (u1 * u2)^(-theta - 1)
-  
-  B_deriv = B * ((1 / theta^2) * log(g_theta) + 
+
+  B_deriv = B * ((1 / theta^2) * log(g_theta) +
                    (-2 - 1 / theta) * (-u1_theta * log_u1 - u2_theta * log_u2) / g_theta)
   C_deriv = -C * log_u1u2
-  
+
 
   bivariate_copula_values = A * B * C
   bivariate_copula_derivatives = B * C + A * (B_deriv * C + B * C_deriv)
-  
+
   multiplication_mat = matrix(bivariate_copula_values, nrow = d, ncol = d)
   diag(multiplication_mat) = bivariate_copula_derivatives
-  
+
   numerator = apply(multiplication_mat, 2, prod)
   denominator = prod(bivariate_copula_values)
-  
+
   return(list("numerator" = numerator, "denominator" = denominator))
 }
 
@@ -155,7 +96,7 @@ clayton_single_obs = function(u1, theta, d, n_nodes, nl_u2, wl){
   numerator_matrix = do.call(rbind, tmp[1,])
   numerator = apply(numerator_matrix * wl, 2, sum)
   denominator = sum(unlist(tmp[2,])*wl)
-  
+
   deriv_log_likelihood = numerator / denominator
   log_likelihood = log(denominator)
   # attr(log_likelihood, "gradient") = deriv_log_likelihood
@@ -172,47 +113,20 @@ neg_clayton_loglikelihood = function(unif_df, theta, d, nl_u2, wl){
   out = t(apply(unif_df, 1, clayton_single_obs, theta = theta, d = d,nl_u2 = nl_u2, wl = wl))
   log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
   derivatives = rowSums(sapply(out, function(x) x$deriv_log_likelihood))
-  
+
   neg_log_likelihood = -1 * log_likelihood
   attr(neg_log_likelihood, "gradient") = -1 * derivatives
   return(neg_log_likelihood)
 }
 
-```
-
-```{r}
-package_runtime = c(package_runtime, NA) 
-log_likelihood_package = c(log_likelihood_package, NA)
-
-
-start = Sys.time()
-#u1 = as.numeric(u1)
-n_nodes = 25
-d = ncol(unif_df)
-theta = rep(2, d)
-gl = gaussLegendre(n = n_nodes, a = 0, b = 1)
-nl_u2 = gl$x
-wl = gl$w
-clayton_1f_whole_data = nlm(f = neg_clayton_loglikelihood, p = theta, unif_df = unif_df, nl_u2 = nl_u2, wl = wl, d = d, gradtol = 1e-5, hessian = FALSE, check.analyticals = TRUE)
-end = Sys.time()
-my_code_runtime = c(my_code_runtime, end-start)
-models = c(models, "Clayton")
-print(end - start)
-save(clayton_1f_whole_data, file = "/Users/ruiliu/Desktop/research/results/clayton_1f_whole_data.RData")
-log_likelihood_mycode = c(log_likelihood_mycode, -clayton_1f_whole_data$minimum)
-```
-
-#3. Gumbel 
-
-```{r}
 bivariate_gumbel_copula = function(u1, u2, theta){
   ln_u1 = log(u1)
   ln_u2 = log(u2)
   ln_mimus_ln_u1 = log(-ln_u1)
   ln_mimus_ln_u2 = log(-ln_u2)
-  
+
   one_over_theta = 1/theta
-  a_theta = (-ln_u1)^theta 
+  a_theta = (-ln_u1)^theta
   b_theta = (-ln_u2)^theta
   A = (a_theta + b_theta)^one_over_theta
   B = A + theta - 1
@@ -224,13 +138,13 @@ bivariate_gumbel_copula = function(u1, u2, theta){
   out = B*C*D*E*FF*G
 
   deriv_A = A * ((a_theta * ln_mimus_ln_u1 + b_theta * ln_mimus_ln_u2)/(a_theta + b_theta) * one_over_theta - one_over_theta^2*log(a_theta + b_theta))
-  deriv_B = deriv_A + 1 
+  deriv_B = deriv_A + 1
   deriv_C = C * (deriv_A/A * (1-2*theta) - 2*log(A))
   deriv_D = D * (-deriv_A)
   deriv_E = E*(ln_mimus_ln_u1)
   deriv_F = FF*(ln_mimus_ln_u2)
-  
-  result = deriv_B * C * D * E * FF * G + B * deriv_C * D * E * FF * G + B * C * deriv_D * E * FF * G + B * C * D * deriv_E * FF * G + B * C * D * E * deriv_F * G 
+
+  result = deriv_B * C * D * E * FF * G + B * deriv_C * D * E * FF * G + B * C * deriv_D * E * FF * G + B * C * D * deriv_E * FF * G + B * C * D * E * deriv_F * G
   return(list(likelihood = out, derivative = result))
 }
 
@@ -238,10 +152,10 @@ gumbel_single_obs_pre = function(u1, u2, theta, d){
   tmp =  mapply(bivariate_gumbel_copula, u1 = u1, theta = theta, MoreArgs = list(u2 = u2))
   bivariate_copula_values = unlist(tmp[1,])
   bivariate_copula_derivatives = unlist(tmp[2,])
-  
+
   multiplication_mat = matrix(bivariate_copula_values, nrow = d, ncol = d)
   diag(multiplication_mat) = bivariate_copula_derivatives
-  
+
   numerator = apply(multiplication_mat, 2, prod)
   denominator = prod(bivariate_copula_values)
   return(list("numerator" = numerator, "denominator" = denominator))
@@ -254,10 +168,10 @@ gumbel_single_obs = function(u1, theta, d, n_nodes){
   wl = gl$w
   tmp = mapply(gumbel_single_obs_pre, u2 = nl_u2, MoreArgs = list(u1 = u1, theta = theta, d))
   numerator_matrix = do.call(rbind, tmp[1,])
-  
+
   numerator = apply(numerator_matrix * wl, 2, sum)
   denominator = sum(unlist(tmp[2,])*wl)
-  
+
   deriv_log_likelihood = numerator / denominator
   log_likelihood = log(denominator)
   # attr(log_likelihood, "gradient") = deriv_log_likelihood
@@ -276,82 +190,90 @@ neg_gumbel_loglikelihood = function(unif_df, theta, d, n_nodes){
   out = t(apply(unif_df, 1, gumbel_single_obs, theta = theta, d = d, n_nodes = n_nodes))
   log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
   derivatives = rowSums(sapply(out, function(x) x$deriv_log_likelihood))
-  
+
   neg_log_likelihood = -1 * log_likelihood
   attr(neg_log_likelihood, "gradient") = -1 * derivatives
   return(neg_log_likelihood)
 }
-#code to check derivative 
-```
 
-```{r}
-####################################################################################################
+#' Fit a One-Factor Copula Model
+#'
+#' This function fits a one-factor copula model to the given data frame of uniform variables.
+#' Supported copulas include 'Gaussian', 'Clayton', 'Gumbel', and 'rGumbel'.
+#'
+#' @param df A data frame containing uniform variables with \code{nrow(df)}
+#' observations and \code{ncol(df)} variables.
+#' @param copula A character string specifying the copula to be fitted.
+#' Supported values are \code{'Gaussian'}, \code{'Clayton'}, \code{'Gumbel'}, and \code{'rGumbel'}.
+#' @param params A list of parameters for the copula model.
+#' Default is \code{list(n_nodes = 35, init_val = rep(0.5, ncol(df)))} for Gaussian copula,
+#' \code{list(n_nodes = 25, init_val = rep(2, ncol(df)))} for Clayton, Gumbel and reflected Gumbel copulas
+#' .
+#' @return A list containing:
+#'   \describe{
+#'     \item{\code{minimum}}{The estimated minimum of the negative log-likelihood.}
+#'     \item{\code{estimate}}{The optimal parameter values.}
+#'     \item{\code{gradient}}{The gradient at the estimated minimum.}
+#'   }
+#' @export
+fitOneFactor <- function(df, copula, params = list()) {
+  d = ncol(df)
+  if (copula == 'Gaussian') {
+    default_params <- list(n_nodes = 35, init_val = rep(0.5, d))
+    params <- modifyList(default_params, params)
+    n_nodes <- params$n_nodes
+    init_val <- params$init_val
+    if (max(abs(init_val)) > 1){
+      return("invalid copula initial parameters")
+    }
+    return(fit_gaussian_copula(df, init_val, n_nodes))
+  }
+  else if (copula == 'Clayton'){
+    default_params <- list(n_nodes = 35, init_val = rep(2, d))
+    params <- modifyList(default_params, params)
+    n_nodes <- params$n_nodes
+    init_val <- params$init_val
+    if (min(init_val) < 0){
+      return("invalid copula initial parameters")
+    }
+    gl = gaussLegendre(n = n_nodes, a = 0, b = 1)
+    nl_u2 = gl$x
+    wl = gl$w
+    return(nlm(f = neg_clayton_loglikelihood, p = init_val, unif_df = df,
+               nl_u2 = nl_u2, wl = wl, d = d, gradtol = 1e-5, hessian = FALSE,
+               check.analyticals = FALSE))
+  }
+  else if (copula == 'Gumbel'){
+    default_params <- list(n_nodes = 35, init_val = rep(2, d))
+    params <- modifyList(default_params, params)
+    n_nodes <- params$n_nodes
+    init_val <- params$init_val
+    if (min(init_val) < 1){
+      return("invalid copula initial parameters")
+    }
+    gl = gaussLegendre(n = n_nodes, a = 0, b = 1)
+    nl_u2 = gl$x
+    wl = gl$w
+    return(nlm(f = neg_gumbel_loglikelihood, p = init_val, unif_df = df,
+               n_nodes = n_nodes, d = d, gradtol = 1e-5, hessian = FALSE,
+               check.analyticals = FALSE))
+  }
+  else if (copula == 'rGumbel'){
+    default_params <- list(n_nodes = 35, init_val = rep(2, d))
+    params <- modifyList(default_params, params)
+    n_nodes <- params$n_nodes
+    init_val <- params$init_val
+    if (min(init_val) < 1){
+      return("invalid copula initial parameters")
+    }
+    gl = gaussLegendre(n = n_nodes, a = 0, b = 1)
+    nl_u2 = gl$x
+    wl = gl$w
+    return(nlm(f = neg_gumbel_loglikelihood, p = init_val, unif_df = 1-df,
+               n_nodes = n_nodes, d = d, gradtol = 1e-5, hessian = FALSE,
+               check.analyticals = FALSE))
+  }
+}
 
-start = Sys.time()
-d = ncol(unif_df)
-theta = rep(2, d)
-test_1f = mle1factor(continuous = unif_df, copF1 = rep('gum', ncol(unif_df)), gl = gauss.quad.prob(35), hessian = TRUE)
-print(as.numeric(test_1f$cpar$f1))
-print(test_1f$loglik)
-end = Sys.time()
-print("The packaged used: ")
-print(end - start)
-package_runtime = c(package_runtime, as.numeric(difftime(end, start, units = "secs")))
-gl = gaussLegendre(35, 0 ,1)
-nodes = gl$x
-weights = gl$w
-log_likelihood_package = c(log_likelihood_package, -neg_gumbel_loglikelihood(unif_df, unlist(test_1f$cpar$f1), d, 35)[1])
-####################################################################################################
 
-
-start = Sys.time()
-gumbel_1f_whole_data = nlm(f = neg_gumbel_loglikelihood, p = theta, unif_df = unif_df, n_nodes = 25, d = d, gradtol = 1e-5, hessian = FALSE, check.analyticals = TRUE)
-end = Sys.time()
-print(end - start)
-my_code_runtime = c(my_code_runtime, as.numeric(difftime(end, start, units = "secs")))
-log_likelihood_mycode = c(log_likelihood_mycode, -gumbel_1f_whole_data$minimum)
-models = c(models, "Gumbel")
-save(gumbel_1f_whole_data, file = "/Users/ruiliu/Desktop/research/results/gumbel_1f_whole_data.RData")
-```
-
-
-```{r}
-####################################################################################################
-start = Sys.time()
-d = ncol(unif_df)
-theta = rep(2, d)
-test_1f = mle1factor(continuous = 1-unif_df, copF1 = rep('gum', ncol(unif_df)), gl = gauss.quad.prob(35), hessian = TRUE)
-print(as.numeric(test_1f$cpar$f1))
-print(test_1f$loglik)
-end = Sys.time()
-print("The packaged used: ")
-print(end - start)
-package_runtime = c(package_runtime, as.numeric(difftime(end, start, units = "secs")))
-gl = gaussLegendre(35, 0 ,1)
-nodes = gl$x
-weights = gl$w
-log_likelihood_package = c(log_likelihood_package, -neg_gumbel_loglikelihood(unif_df, unlist(test_1f$cpar$f1), d, 35)[1])
-####################################################################################################
-
-
-start = Sys.time()
-rgumbel_1f_whole_data = nlm(f = neg_gumbel_loglikelihood, p = theta, unif_df = 1-unif_df, n_nodes = 25, d = d, gradtol = 1e-5, hessian = FALSE, check.analyticals = TRUE)
-end = Sys.time()
-print(end - start)
-my_code_runtime = c(my_code_runtime, as.numeric(difftime(end, start, units = "secs")))
-log_likelihood_mycode = c(log_likelihood_mycode, -rgumbel_1f_whole_data$minimum)
-save(rgumbel_1f_whole_data, file = "/Users/ruiliu/Desktop/research/results/rgumbel_1f_whole_data.RData")
-models = c(models, "Reflected Gumbel")
-
-save(package_runtime, file = "/Users/ruiliu/Desktop/research/results/package_runtime_one_factor.RData")
-save(my_code_runtime, file = "/Users/ruiliu/Desktop/research/results/my_code_runtime_one_factor.RData")
-save(log_likelihood_package, file = "/Users/ruiliu/Desktop/research/results/log_likelihood_package_one_factor.RData")
-save(log_likelihood_mycode, file = "/Users/ruiliu/Desktop/research/results/log_likelihood_mycode_one_factor.RData")
-
-# load("/Users/ruiliu/Desktop/research/results/package_runtime_one_factor.RData")
-# load("/Users/ruiliu/Desktop/research/results/my_code_runtime.RData")
-# load("/Users/ruiliu/Desktop/research/results/log_likelihood_package.RData")
-# load("/Users/ruiliu/Desktop/research/results/log_likelihood_mycode.RData")
-
-```
 

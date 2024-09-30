@@ -24,18 +24,18 @@ head(unif_df)
 ```
 
 ```{r}
-gaussian_derivative_single_obs <- function(u1, rho, nl_x2, wl){
-  rho_squared <- rho^2
-  one_minus_rho_squared <- 1 - rho_squared
+gaussian_derivative_single_obs = function(u1, rho, nl_x2, wl){
+  rho_squared = rho^2
+  one_minus_rho_squared = 1 - rho_squared
   
   u1 = as.numeric(u1)
-  x1 <- qnorm(u1, mean = 0, sd = 1)
+  x1 = qnorm(u1, mean = 0, sd = 1)
   x2 = matrix(rep(nl_x2, 20), ncol = 35, nrow = 20, byrow = TRUE)
   
-  numerator <- 2 * rho * x1 * x2 - rho_squared * (x1^2 + x2^2)
-  denominator <- 2 * one_minus_rho_squared
-  exponent <- numerator / denominator
-  out <- exp(exponent) / sqrt(one_minus_rho_squared)
+  numerator = 2 * rho * x1 * x2 - rho_squared * (x1^2 + x2^2)
+  denominator = 2 * one_minus_rho_squared
+  exponent = numerator / denominator
+  out = exp(exponent) / sqrt(one_minus_rho_squared)
   prod_vec = apply(out, 2, prod)
     ##########calcualte numerator
   # we have a d by |nl| matrix (columns are the derivative values for each nl)
@@ -50,14 +50,14 @@ gaussian_derivative_single_obs <- function(u1, rho, nl_x2, wl){
 }
 
 #this function returns a vector of derivatives for a all observations, and the log likelihood for all observations
-gaussian_derivative <- function(df, rho, nl_x2, wl){
+gaussian_derivative = function(df, rho, nl_x2, wl){
   out = t(apply(df, 1, gaussian_derivative_single_obs, rho = rho, nl_x2 = nl_x2, wl = wl))
-  log_likelihood <- sum(sapply(out, function(x) x$log_likelihood))
-  derivatives <- rowSums(sapply(out, function(x) x$derivatives))
+  log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
+  derivatives = rowSums(sapply(out, function(x) x$derivatives))
   return(list(log_likelihood = log_likelihood, derivatives = derivatives))
 }
 
-neg_log_gaussian_likelihood <- function(df, rho, nl_x2, wl){
+neg_log_gaussian_likelihood = function(df, rho, nl_x2, wl){
   # print("rho: ")
   # print(rho)
   if ((max(rho) > 0.9999999) | (min(rho) < -0.9999999)){
@@ -75,13 +75,13 @@ neg_log_gaussian_likelihood <- function(df, rho, nl_x2, wl){
 
 
 ```{r}
-# fit_gaussian_copula_time_varying <- function(df, rho, n_nodes, period){
+# fit_gaussian_copula_time_varying = function(df, rho, n_nodes, period){
 #   likelihoods = c()
 #   estimates = list()
 #   gradients = c()
 #   for (i in 1:(nrow(df) - period)){
-#     tmp <- df[i:(i+period),]
-#     result_test <- nlm(f = neg_log_gaussian_likelihood, p = rho, df = tmp, nl_x2 = nl_x2, wl = wl, gradtol = 1e-5, hessian = FALSE, check.analyticals = FALSE)
+#     tmp = df[i:(i+period),]
+#     result_test = nlm(f = neg_log_gaussian_likelihood, p = rho, df = tmp, nl_x2 = nl_x2, wl = wl, gradtol = 1e-5, hessian = FALSE, check.analyticals = FALSE)
 #     likelihoods = c(likelihoods, result_test$minimum)
 #     estimates = append(estimates, list(result_test$estimate))
 #     gradients = append(gradients, list(result_test$gradient))
@@ -91,21 +91,20 @@ neg_log_gaussian_likelihood <- function(df, rho, nl_x2, wl){
 ```
 
 ```{r}
-fit_gaussian_copula_time_varying <- function(df, rho, period){
+fit_gaussian_copula_time_varying = function(df, rho, period){
   
-  # Define necessary functions within the main function
-  gaussian_derivative_single_obs <- function(u1, rho, nl_x2, wl){
-    rho_squared <- rho^2
-    one_minus_rho_squared <- 1 - rho_squared
+  gaussian_derivative_single_obs = function(u1, rho, nl_x2, wl){
+    rho_squared = rho^2
+    one_minus_rho_squared = 1 - rho_squared
     
     u1 = as.numeric(u1)
-    x1 <- qnorm(u1, mean = 0, sd = 1)
+    x1 = qnorm(u1, mean = 0, sd = 1)
     x2 = matrix(rep(nl_x2, 20), ncol = 35, nrow = 20, byrow = TRUE)
     
-    numerator <- 2 * rho * x1 * x2 - rho_squared * (x1^2 + x2^2)
-    denominator <- 2 * one_minus_rho_squared
-    exponent <- numerator / denominator
-    out <- exp(exponent) / sqrt(one_minus_rho_squared)
+    numerator = 2 * rho * x1 * x2 - rho_squared * (x1^2 + x2^2)
+    denominator = 2 * one_minus_rho_squared
+    exponent = numerator / denominator
+    out = exp(exponent) / sqrt(one_minus_rho_squared)
     prod_vec = apply(out, 2, prod)
     
     # Calculate numerator
@@ -119,14 +118,14 @@ fit_gaussian_copula_time_varying <- function(df, rho, period){
     return(list(log_likelihood = log(denom), derivatives = result))
   }
 
-  gaussian_derivative <- function(df, rho, nl_x2, wl){
+  gaussian_derivative = function(df, rho, nl_x2, wl){
     out = t(apply(df, 1, gaussian_derivative_single_obs, rho = rho, nl_x2 = nl_x2, wl = wl))
-    log_likelihood <- sum(sapply(out, function(x) x$log_likelihood))
-    derivatives <- rowSums(sapply(out, function(x) x$derivatives))
+    log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
+    derivatives = rowSums(sapply(out, function(x) x$derivatives))
     return(list(log_likelihood = log_likelihood, derivatives = derivatives))
   }
   
-  neg_log_gaussian_likelihood <- function(df, rho, nl_x2, wl){
+  neg_log_gaussian_likelihood = function(df, rho, nl_x2, wl){
     print(rho[1])
     if ((max(rho) > 0.9999999) | (min(rho) < -0.9999999) | rho[1]<0){
       log_likelihood = 1e10
@@ -140,19 +139,15 @@ fit_gaussian_copula_time_varying <- function(df, rho, period){
     return(log_likelihood)
   }
 
-  # Number of cores to use
-  num_cores <- detectCores() - 1  # Leave one core free
+  num_cores = detectCores() - 1  # Leave one core free
   
-  # Create cluster
-  cl <- makeCluster(num_cores)
+  cl = makeCluster(num_cores)
 
-  # Export necessary variables to worker nodes, including unif_df
   clusterExport(cl, varlist = c("df", "rho", "nl_x2", "wl", "neg_log_gaussian_likelihood", "gaussian_derivative", "gaussian_derivative_single_obs"))
 
-  # Define the task to be parallelized
-  task <- function(i) {
-    tmp <- df[i:(i + period), ]
-    result_test <- nlm(f = neg_log_gaussian_likelihood, p = rho, df = tmp, nl_x2 = nl_x2, wl = wl, gradtol = 1e-5, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
+  task = function(i) {
+    tmp = df[i:(i + period), ]
+    result_test = nlm(f = neg_log_gaussian_likelihood, p = rho, df = tmp, nl_x2 = nl_x2, wl = wl, gradtol = 1e-5, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
     
     return(list(
       likelihood = result_test$minimum,
@@ -161,27 +156,24 @@ fit_gaussian_copula_time_varying <- function(df, rho, period){
     ))
   }
 
-  # Parallel execution over chunks with progress tracking using pbapply
-  results <- pblapply(1:(nrow(df) - period), task, cl = cl)
+  results = pblapply(1:(nrow(df) - period), task, cl = cl)
   
-  stopCluster(cl)  # Close the cluster
+  stopCluster(cl) 
   
-  # Extract results into separate lists
-  likelihoods <- sapply(results, function(res) res$likelihood)
-  estimates <- lapply(results, function(res) res$estimate)
-  gradients <- lapply(results, function(res) res$gradient)
+  likelihoods = sapply(results, function(res) res$likelihood)
+  estimates = lapply(results, function(res) res$estimate)
+  gradients = lapply(results, function(res) res$gradient)
   
   return(list(likelihoods = likelihoods, estimates = estimates, gradients = gradients))
 }
 ```
 
 ```{r}
-# Prepare Gauss-Legendre quadrature points
 gaussian_times = c()
 n_nodes = 35
-gl <- gaussLegendre(n_nodes, 0, 1)
-nl_x2 <- qnorm(gl$x)
-wl <- gl$w
+gl = gaussLegendre(n_nodes, 0, 1)
+nl_x2 = qnorm(gl$x)
+wl = gl$w
 
 start = Sys.time()
 result_gaussian_90_days = fit_gaussian_copula_time_varying(unif_df, rep(0.5, 20), 90)
@@ -213,14 +205,15 @@ save(result_gaussian_720_days, file = "/Users/ruiliu/Desktop/research/results/re
 
 save(gaussian_times, file = "/Users/ruiliu/Desktop/research/results/gaussian_time_varying_times.RData")
 ```
+
 ```{r}
-fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
+fit_clayton_copula_time_varying = function(df, theta, period, nl_u2) {
   
   # Number of cores to use
-  num_cores <- detectCores() - 1  # Leave one core free
+  num_cores = detectCores() - 1  # Leave one core free
   
   # Create cluster
-  cl <- makeCluster(num_cores)
+  cl = makeCluster(num_cores)
 
   # Ensure all libraries are available in worker nodes
   clusterEvalQ(cl, {
@@ -230,10 +223,10 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
   clusterExport(cl, varlist = c("nl_u2", "wl"))
 
   # Define the task to be parallelized
-  task <- function(i, df, theta, period, nl_u2) {
+  task = function(i, df, theta, period, nl_u2) {
     
     # Define necessary functions within the task
-    clayton_single_obs_pre <- function(u1, u2, theta, d) {
+    clayton_single_obs_pre = function(u1, u2, theta, d) {
       u1_theta = u1^(-theta)
       u2_theta = u2^(-theta)
       log_u1 = log(u1)
@@ -260,7 +253,7 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
       return(list("numerator" = numerator, "denominator" = denominator))
     }
     
-    clayton_single_obs <- function(u1, theta, d, n_nodes, nl_u2, wl) {
+    clayton_single_obs = function(u1, theta, d, n_nodes, nl_u2, wl) {
       tmp = mapply(clayton_single_obs_pre, u2 = nl_u2, MoreArgs = list(u1 = u1, theta = theta, d))
       numerator_matrix = do.call(rbind, tmp[1, ])
       numerator = apply(numerator_matrix * wl, 2, sum)
@@ -271,15 +264,15 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
       return(list(log_likelihood = log_likelihood, deriv_log_likelihood = deriv_log_likelihood))
     }
   
-    neg_clayton_loglikelihood <- function(df, theta, d, nl_u2, wl) {
+    neg_clayton_loglikelihood = function(df, theta, d, nl_u2, wl) {
       if (min(theta) < 1) {
         log_likelihood = 9e5
         attr(log_likelihood, "gradient") = 1e6 * sign(theta)
         return(log_likelihood)
       }
       out = t(apply(df, 1, clayton_single_obs, theta = theta, d = d, nl_u2 = nl_u2, wl = wl))
-      log_likelihood <- sum(sapply(out, function(x) x$log_likelihood))
-      derivatives <- rowSums(sapply(out, function(x) x$deriv_log_likelihood))
+      log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
+      derivatives = rowSums(sapply(out, function(x) x$deriv_log_likelihood))
       
       neg_log_likelihood = -1 * log_likelihood
       attr(neg_log_likelihood, "gradient") = -1 * derivatives
@@ -287,8 +280,8 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
     }
 
     # Main task logic
-    tmp <- df[i:(i + period), ]
-    result_test <- nlm(f = neg_clayton_loglikelihood, p = theta, df = tmp, d = ncol(df), nl_u2 = nl_u2, wl = wl, gradtol = 1e-2, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
+    tmp = df[i:(i + period), ]
+    result_test = nlm(f = neg_clayton_loglikelihood, p = theta, df = tmp, d = ncol(df), nl_u2 = nl_u2, wl = wl, gradtol = 1e-2, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
     
     return(list(
       likelihood = result_test$minimum,
@@ -298,14 +291,14 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
   }
 
   # Parallel execution over chunks with progress tracking using pbapply
-  results <- pblapply(1:(nrow(df) - period), function(i) task(i, df, theta, period, nl_u2), cl = cl)
+  results = pblapply(1:(nrow(df) - period), function(i) task(i, df, theta, period, nl_u2), cl = cl)
   
   stopCluster(cl)  # Close the cluster
   
   # Extract results into separate lists
-  likelihoods <- sapply(results, function(res) res$likelihood)
-  estimates <- lapply(results, function(res) res$estimate)
-  gradients <- lapply(results, function(res) res$gradient)
+  likelihoods = sapply(results, function(res) res$likelihood)
+  estimates = lapply(results, function(res) res$estimate)
+  gradients = lapply(results, function(res) res$gradient)
   
   return(list(likelihoods = likelihoods, estimates = estimates, gradients = gradients))
 }
@@ -315,9 +308,9 @@ fit_clayton_copula_time_varying <- function(df, theta, period, nl_u2) {
 ```{r}
 clayton_times = c()
 n_nodes = 35
-gl <- gaussLegendre(n_nodes, 0, 1)
-nl_u2 <- gl$x
-wl <- gl$w
+gl = gaussLegendre(n_nodes, 0, 1)
+nl_u2 = gl$x
+wl = gl$w
 
 start = Sys.time()
 result_clayton_90_days = fit_clayton_copula_time_varying(df = unif_df, theta = rep(2, 20),period = 90, nl_u2 = nl_u2)
@@ -352,13 +345,13 @@ save(clayton_times, file = "/Users/ruiliu/Desktop/research/results/clayton_time_
 ```
 
 ```{r}
-fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
+fit_gumbel_copula_time_varying = function(df, theta, period, nl_u2, n_nodes) {
   
   # Number of cores to use
-  num_cores <- detectCores() - 1  # Leave one core free
+  num_cores = detectCores() - 1  # Leave one core free
   
   # Create cluster
-  cl <- makeCluster(num_cores)
+  cl = makeCluster(num_cores)
 
   # Ensure all libraries are available in worker nodes
   clusterEvalQ(cl, {
@@ -369,7 +362,7 @@ fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
   clusterExport(cl, varlist = c("wl", "n_nodes"))
 
   # Define the task to be parallelized
-  task <- function(i, df, theta, period, nl_u2) {
+  task = function(i, df, theta, period, nl_u2) {
     
     # Define necessary functions within the task
     bivariate_gumbel_copula = function(u1, u2, theta){
@@ -440,8 +433,8 @@ fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
       return(log_likelihood)
     }
     out = t(apply(df, 1, gumbel_single_obs, theta = theta, d = d, n_nodes = n_nodes))
-    log_likelihood <- sum(sapply(out, function(x) x$log_likelihood))
-    derivatives <- rowSums(sapply(out, function(x) x$deriv_log_likelihood))
+    log_likelihood = sum(sapply(out, function(x) x$log_likelihood))
+    derivatives = rowSums(sapply(out, function(x) x$deriv_log_likelihood))
     
     neg_log_likelihood = -1 * log_likelihood
     attr(neg_log_likelihood, "gradient") = -1 * derivatives
@@ -449,8 +442,8 @@ fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
   }
 
     # Main task logic
-    tmp <- df[i:(i + period), ]
-    result_test <- nlm(f = neg_gumbel_loglikelihood, p = theta, df = tmp, d = ncol(df), n_nodes = n_nodes, gradtol = 1e-2, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
+    tmp = df[i:(i + period), ]
+    result_test = nlm(f = neg_gumbel_loglikelihood, p = theta, df = tmp, d = ncol(df), n_nodes = n_nodes, gradtol = 1e-2, hessian = FALSE, check.analyticals = FALSE, steptol = 1e-10, iterlim = 10000)
     
     return(list(
       likelihood = result_test$minimum,
@@ -460,14 +453,14 @@ fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
   }
 
   # Parallel execution over chunks with progress tracking using pbapply
-  results <- pblapply(1:(nrow(df) - period), function(i) task(i, df, theta, period, n_nodes), cl = cl)
+  results = pblapply(1:(nrow(df) - period), function(i) task(i, df, theta, period, n_nodes), cl = cl)
   
   stopCluster(cl)  # Close the cluster
   
   # Extract results into separate lists
-  likelihoods <- sapply(results, function(res) res$likelihood)
-  estimates <- lapply(results, function(res) res$estimate)
-  gradients <- lapply(results, function(res) res$gradient)
+  likelihoods = sapply(results, function(res) res$likelihood)
+  estimates = lapply(results, function(res) res$estimate)
+  gradients = lapply(results, function(res) res$gradient)
   
   return(list(likelihoods = likelihoods, estimates = estimates, gradients = gradients))
 }
@@ -477,9 +470,9 @@ fit_gumbel_copula_time_varying <- function(df, theta, period, nl_u2, n_nodes) {
 ```{r}
 gumbel_times = c()
 n_nodes = 35
-gl <- gaussLegendre(n_nodes, 0, 1)
-nl_u2 <- gl$x
-wl <- gl$w
+gl = gaussLegendre(n_nodes, 0, 1)
+nl_u2 = gl$x
+wl = gl$w
 start = Sys.time()
 result_gumbel_90_days = fit_gumbel_copula_time_varying(df = unif_df, theta = rep(2, 20), period = 90, n_nodes = n_nodes)
 end = Sys.time()
@@ -514,9 +507,9 @@ save(gumbel_times, file = "/Users/ruiliu/Desktop/research/results/gumbel_time_va
 ```{r}
 rgumbel_times = c()
 n_nodes = 35
-gl <- gaussLegendre(n_nodes, 0, 1)
-nl_u2 <- gl$x
-wl <- gl$w
+gl = gaussLegendre(n_nodes, 0, 1)
+nl_u2 = gl$x
+wl = gl$w
 
 start = Sys.time()
 result_rgumbel_90_days = fit_gumbel_copula_time_varying(df = 1-unif_df, theta = rep(2, 20), period = 90, n_nodes = n_nodes)
